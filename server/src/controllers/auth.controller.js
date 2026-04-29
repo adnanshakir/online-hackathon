@@ -6,7 +6,7 @@ import AppError from '../utils/appError.js';
 
 const cookieOptions = {
   httpOnly: true,
-  sameSite: 'lax',
+  sameSite: config.NODE_ENV === 'production' ? 'none' : 'lax',
   secure: config.NODE_ENV === 'production',
 };
 
@@ -24,7 +24,7 @@ const generateTokens = async (user) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password, provider = 'local' } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -34,7 +34,7 @@ export const register = async (req, res, next) => {
     const userData = {
       name,
       email,
-      provider,
+      authProviders: ['local'],
       password,
     };
 
@@ -66,7 +66,7 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select(
       '+password +refreshToken'
     );
-    if (!user || user.provider !== 'local' || !user.password) {
+    if (!user || !user.authProviders.includes('local') || !user.password) {
       throw new AppError('Invalid credentials', 401);
     }
 
@@ -155,3 +155,68 @@ export const logout = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const googleCallback = async (req, res, next) => {
+  try {
+    const { googleId, name, email, avatar } = req.user;
+
+    if (!email) {
+      throw new AppError('Google account must have an email associated.', 400);
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new OAuth user
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar,
+        authProviders: ['google'],
+      });
+    } else {
+      // Update existing user with OAuth info if not already linked
+      let updated = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        updated = true;
+      }
+      
+      if (!user.authProviders.includes('google')) {
+        user.authProviders.push('google');
+        updated = true;
+      }
+
+      if (!user.avatar && avatar) {
+        user.avatar = avatar;
+        updated = true;
+      }
+
+      if (updated) {
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    if (!user.isActive) {
+      throw new AppError('Account is disabled', 403);
+    }
+
+    const { accessToken, refreshToken } = await generateTokens(user);
+
+    res.cookie('accessToken', accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.redirect(config.FRONTEND_URL);
+  } catch (error) {
+    return next(error);
+  }
+};
+

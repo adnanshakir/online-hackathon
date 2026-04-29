@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
       select: false,
       minlength: 8,
       required: function () {
-        return this.provider === 'local';
+        return this.authProviders.includes('local');
       },
     },
 
@@ -37,10 +37,10 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    provider: {
-      type: String,
+    authProviders: {
+      type: [String],
       enum: ['local', 'google'],
-      default: 'local',
+      default: ['local'],
     },
 
     googleId: {
@@ -82,7 +82,7 @@ const userSchema = new mongoose.Schema(
  * Hash password before saving (safety net)
  */
 userSchema.pre('save', async function () {
-  if (!this.isModified('password') || this.provider !== 'local') {
+  if (!this.isModified('password') || !this.authProviders.includes('local')) {
     return;
   }
 
@@ -119,4 +119,5 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 export const User = mongoose.model('User', userSchema);
+
 

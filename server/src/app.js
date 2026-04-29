@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import errorHandler from './middlewares/error.middleware.js';
+import passport from './config/passport.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(
     credentials: true,
   })
 );
+app.use(passport.initialize());
 
 // Routes
 app.use('/api/auth', authRoutes);
