@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { readStorage, writeStorage } from '@/lib/storage';
 
-const STORAGE_KEY = 'sentinel.theme';
+const STORAGE_KEY = 'opswatch.theme';
 
 function applyTheme(theme) {
   if (typeof document === 'undefined') return;

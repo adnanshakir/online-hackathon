@@ -8,7 +8,7 @@ export function ActionsCard({ incident }) {
   const isResolved = incident.status === 'resolved';
 
   const copyShareLink = async () => {
-    const url = `${window.location.origin}/status/sentinel-demo`;
+    const url = `${window.location.origin}/status/opswatch-demo`;
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Public link copied', { description: url });

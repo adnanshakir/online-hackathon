@@ -1,27 +1,38 @@
 import { create } from 'zustand';
 import { readStorage, writeStorage, removeStorage } from '@/lib/storage';
-import { DEMO_USER } from '@/data/users';
 
-const STORAGE_KEY = 'sentinel.auth.v1';
+const STORAGE_KEY = 'opswatch.auth.v1';
 
 const initial = readStorage(STORAGE_KEY, null);
 
+/**
+ * Auth state.
+ *
+ * The actual login / register / logout HTTP calls live in `lib/api.js`
+ * (`auth.login`, `auth.register`, `auth.logout`). Those functions write the
+ * resulting user into this store via `setUser`, so the rest of the app can
+ * read it synchronously.
+ *
+ * On hard-refresh we hydrate from localStorage so the app stays "logged in"
+ * until `auth.me()` confirms (or denies) the session.
+ */
 export const useAuthStore = create((set) => ({
   user: initial,
   isAuthenticated: !!initial,
 
-  login: ({ email, name }) => {
-    const user = {
-      ...DEMO_USER,
-      email: email || DEMO_USER.email,
-      name: name || DEMO_USER.name,
-    };
-    writeStorage(STORAGE_KEY, user);
-    set({ user, isAuthenticated: true });
-    return user;
+  /** Set the current user (call after login/register/me) */
+  setUser: (user) => {
+    if (user) {
+      writeStorage(STORAGE_KEY, user);
+      set({ user, isAuthenticated: true });
+    } else {
+      removeStorage(STORAGE_KEY);
+      set({ user: null, isAuthenticated: false });
+    }
   },
 
-  logout: () => {
+  /** Clear local auth (call after logout) */
+  clear: () => {
     removeStorage(STORAGE_KEY);
     set({ user: null, isAuthenticated: false });
   },

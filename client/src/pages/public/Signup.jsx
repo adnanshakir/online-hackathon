@@ -7,29 +7,44 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/shared/Logo';
-import { useAuthStore } from '@/store/authStore';
 import { fadeUp } from '@/components/motion/variants';
+import * as api from '@/lib/api';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
       toast.error('Please enter your email');
       return;
     }
+    if (!name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    if (!password || password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
     setSubmitting(true);
-    setTimeout(() => {
-      login({ email, name: name || email.split('@')[0] });
-      toast.success('Welcome to Sentinel!');
+    try {
+      await api.register({ name, email, password });
+      toast.success('Welcome to OpsWatch!');
       navigate('/app/dashboard');
-    }, 700);
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'Sign up failed. Please try again.';
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -88,46 +103,127 @@ export default function Signup() {
         </div>
       </motion.div>
 
-      {/* Right side */}
-      <div className="relative hidden overflow-hidden bg-[var(--color-surface)] lg:block">
+      {/* Right: clean panel + mini incident preview */}
+      <div className="relative hidden overflow-hidden border-l border-[var(--color-border)] lg:block">
+        {/* subtle dot grid only */}
         <div
-          className="pointer-events-none absolute inset-0"
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
-            background:
-              'linear-gradient(135deg, rgba(139, 92, 246, 0.32) 0%, transparent 50%, rgba(59, 130, 246, 0.32) 100%)',
+            backgroundImage:
+              'radial-gradient(oklch(96% 0 0) 1px, transparent 1px)',
+            backgroundSize: '22px 22px',
           }}
         />
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-30" />
-        <div className="pointer-events-none absolute -right-40 top-1/3 h-[400px] w-[400px] rounded-full bg-[var(--color-brand-violet)]/40 blur-[120px]" />
-        <div className="relative grid h-full place-items-center p-12">
-          <div className="max-w-md text-center">
-            <h2 className="text-3xl font-semibold leading-tight tracking-tight">
-              Built for teams that ship.
-            </h2>
-            <p className="mt-3 text-sm text-[var(--color-muted)]">
-              Used by engineering teams who treat reliability as a first-class concern.
+
+        <div className="relative grid h-full place-items-center p-10 xl:p-16">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-md"
+          >
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary)]">
+              What you'll get
             </p>
-            <ul className="mt-8 space-y-3 text-left text-sm">
-              {[
-                'Real-time incident timelines',
-                'AI-assisted root cause suggestions',
-                'Auto-generated postmortems',
-                'Beautiful public status pages',
-              ].map((f) => (
-                <li
-                  key={f}
-                  className="flex items-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)]/40 px-3 py-2 backdrop-blur"
-                >
-                  <span className="grid size-5 place-items-center rounded-full bg-gradient-accent">
-                    <svg viewBox="0 0 12 12" className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M2 6.5L4.5 9L10 3" />
-                    </svg>
+            <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-[-0.03em] xl:text-4xl">
+              The calmest 19 minutes{' '}
+              <span className="text-[var(--color-brand-primary)]">your team has ever shipped.</span>
+            </h2>
+            <p className="mt-4 text-[14px] leading-relaxed text-[var(--color-muted-strong)]">
+              Real-time timelines, smart role assignment, AI-generated briefs — production-ready
+              from day one.
+            </p>
+
+            <AuthIncidentPreview className="mt-8" />
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ * Compact incident preview shown on the right side of auth pages.
+ * A trimmed-down version of the landing page WorkspacePreview.
+ * ──────────────────────────────────────────────────────────── */
+
+function AuthIncidentPreview({ className = '' }) {
+  const items = [
+    { time: '14:02', label: 'investigating', dot: 'bg-red-500', text: 'Elevated 5xx on /api/checkout' },
+    { time: '14:08', label: 'identified', dot: 'bg-orange-500', text: 'Stripe webhook timeout under load' },
+    { time: '14:21', label: 'resolved', dot: 'bg-[var(--color-brand-primary)]', text: '19 min · 0 customer reports' },
+  ];
+
+  const tone = {
+    investigating: 'border-red-500/30 bg-red-500/10 text-red-400',
+    identified: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+    resolved:
+      'border-[var(--color-brand-primary)]/40 bg-[var(--color-brand-primary)]/15 text-[var(--color-brand-primary)]',
+  };
+
+  return (
+    <div className={`overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] ${className}`}>
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)] px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+            INC-8421
+          </span>
+          <span className="rounded border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-red-400">
+            Critical
+          </span>
+        </div>
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] tabular-nums text-[var(--color-muted)]">
+          19m
+        </span>
+      </div>
+
+      <div className="border-b border-[var(--color-border)] px-4 py-3">
+        <div className="text-[14px] font-semibold tracking-[-0.02em]">
+          Elevated 5xx errors on checkout API
+        </div>
+      </div>
+
+      <div className="space-y-3 p-4">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">
+            Timeline
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
+            live
+          </span>
+        </div>
+
+        <div className="relative space-y-3">
+          <div aria-hidden className="absolute left-[5px] top-2 bottom-2 w-px bg-[var(--color-border)]" />
+          {items.map((u) => (
+            <div key={u.time} className="relative flex items-start gap-3 pl-7">
+              <span className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-[var(--color-surface)] ${u.dot}`} />
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]">{u.time}</span>
+                  <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${tone[u.label]}`}>
+                    {u.label}
                   </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
+                </div>
+                <div className="mt-0.5 truncate text-[12px] text-[var(--color-foreground)]/95">{u.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/[0.06] p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary)]">
+              AI Brief
+            </span>
+            <span className="font-mono text-[10px] tabular-nums text-[var(--color-brand-primary)]">
+              87% conf
+            </span>
           </div>
+          <p className="mt-1.5 text-[11.5px] leading-relaxed text-[var(--color-muted-strong)]">
+            Webhook queue saturated after deploy v2.4.1. Mitigation succeeded.
+          </p>
         </div>
       </div>
     </div>

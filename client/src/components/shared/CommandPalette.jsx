@@ -77,7 +77,7 @@ export function CommandPalette({ onCreateIncident }) {
             <CmdItem icon={LayoutDashboard} label="Dashboard" onSelect={() => go('/app/dashboard')} />
             <CmdItem icon={AlertTriangle} label="Incidents" onSelect={() => go('/app/incidents')} />
             <CmdItem icon={Users} label="Team" onSelect={() => go('/app/team')} />
-            <CmdItem icon={Globe} label="Public status" onSelect={() => go('/status/sentinel-demo')} />
+            <CmdItem icon={Globe} label="Public status" onSelect={() => go('/status/opswatch-demo')} />
             <CmdItem icon={Settings} label="Settings" onSelect={() => go('/app/settings')} />
           </Command.Group>
 

@@ -6,12 +6,12 @@ const Textarea = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     className={cn(
       'flex min-h-[88px] w-full rounded-lg border border-[var(--color-border)] ' +
-        'bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-foreground)] ' +
+        'bg-[var(--color-surface)] px-3.5 py-2.5 text-sm text-[var(--color-foreground)] ' +
         'placeholder:text-[var(--color-muted)] ' +
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] ' +
-        'focus-visible:border-transparent ' +
+        'focus-visible:outline-none focus-visible:border-[var(--color-brand-primary)] ' +
+        'focus-visible:ring-1 focus-visible:ring-[var(--color-brand-primary)]/30 ' +
         'disabled:cursor-not-allowed disabled:opacity-50 ' +
-        'transition-all duration-200 resize-y',
+        'transition-colors duration-150 resize-y',
       className
     )}
     {...props}

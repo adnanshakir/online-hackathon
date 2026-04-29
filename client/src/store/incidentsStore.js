@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { readStorage, writeStorage } from '@/lib/storage';
 import { seedIncidents } from '@/data/incidents';
 
-const STORAGE_KEY = 'sentinel.incidents.v1';
+const STORAGE_KEY = 'opswatch.incidents.v1';
 
 function loadInitial() {
   const stored = readStorage(STORAGE_KEY, null);

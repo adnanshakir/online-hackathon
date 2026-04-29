@@ -16,8 +16,8 @@ const buttonVariants = cva(
         default:
           'bg-[var(--color-foreground)] text-[var(--color-background)] hover:brightness-90 active:scale-[0.98]',
         gradient:
-          'bg-gradient-accent text-white shadow-[0_0_0_0_rgba(139,92,246,0)] ' +
-          'hover:shadow-[0_0_30px_rgba(139,92,246,0.45)] hover:brightness-110 active:scale-[0.98]',
+          'bg-[oklch(86.05%_0.1808_143.81)] text-[oklch(16.5%_0.02_143.81)] font-semibold ' +
+          'hover:bg-[oklch(89%_0.18_143.81)] active:scale-[0.98]',
         outline:
           'border border-[var(--color-border)] bg-transparent text-[var(--color-foreground)] ' +
           'hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-muted)]',

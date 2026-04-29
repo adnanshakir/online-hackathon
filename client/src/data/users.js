@@ -9,7 +9,7 @@ export const USERS = [
   {
     id: 'u_priya',
     name: 'Priya Patel',
-    email: 'priya@sentinel.dev',
+    email: 'priya@opswatch.dev',
     role: 'On-call Lead',
     department: 'SRE',
     avatar: avatar('Priya Patel'),
@@ -18,7 +18,7 @@ export const USERS = [
   {
     id: 'u_alex',
     name: 'Alex Chen',
-    email: 'alex@sentinel.dev',
+    email: 'alex@opswatch.dev',
     role: 'Backend Engineer',
     department: 'Platform',
     avatar: avatar('Alex Chen'),
@@ -27,7 +27,7 @@ export const USERS = [
   {
     id: 'u_maya',
     name: 'Maya Rodriguez',
-    email: 'maya@sentinel.dev',
+    email: 'maya@opswatch.dev',
     role: 'Site Reliability',
     department: 'SRE',
     avatar: avatar('Maya Rodriguez'),
@@ -36,7 +36,7 @@ export const USERS = [
   {
     id: 'u_jordan',
     name: 'Jordan Kim',
-    email: 'jordan@sentinel.dev',
+    email: 'jordan@opswatch.dev',
     role: 'Platform Engineer',
     department: 'Platform',
     avatar: avatar('Jordan Kim'),
@@ -45,7 +45,7 @@ export const USERS = [
   {
     id: 'u_sam',
     name: 'Sam Okafor',
-    email: 'sam@sentinel.dev',
+    email: 'sam@opswatch.dev',
     role: 'Frontend Engineer',
     department: 'Product',
     avatar: avatar('Sam Okafor'),
@@ -54,7 +54,7 @@ export const USERS = [
   {
     id: 'u_taylor',
     name: 'Taylor Nguyen',
-    email: 'taylor@sentinel.dev',
+    email: 'taylor@opswatch.dev',
     role: 'Engineering Manager',
     department: 'Leadership',
     avatar: avatar('Taylor Nguyen'),
@@ -65,12 +65,12 @@ export const USERS = [
 export const DEMO_USER = {
   id: 'u_demo',
   name: 'Demo User',
-  email: 'demo@sentinel.dev',
+  email: 'demo@opswatch.dev',
   role: 'On-call',
   avatar: avatar('Demo User'),
   online: true,
-  team: 'Sentinel Demo',
-  teamSlug: 'sentinel-demo',
+  team: 'OpsWatch Demo',
+  teamSlug: 'opswatch-demo',
 };
 
 export function getUserById(id) {

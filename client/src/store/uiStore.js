@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { readStorage, writeStorage } from '@/lib/storage';
 
-const SIDEBAR_KEY = 'sentinel.sidebar.collapsed';
+const SIDEBAR_KEY = 'opswatch.sidebar.collapsed';
 
 export const useUIStore = create((set, get) => ({
   sidebarCollapsed: readStorage(SIDEBAR_KEY, false),

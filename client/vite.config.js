@@ -10,4 +10,16 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      // Forward all /api/* requests to the backend on :3000.
+      // Same-origin from the browser's POV → cookies are first-party,
+      // so httpOnly auth cookies flow without CORS preflight pain.
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });

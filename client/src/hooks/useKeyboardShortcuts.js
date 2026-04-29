@@ -7,7 +7,7 @@ import { useUIStore } from '@/store/uiStore';
  *   g d → /app/dashboard
  *   g i → /app/incidents
  *   g t → /app/team
- *   g s → /status/sentinel-demo
+ *   g s → /status/opswatch-demo
  *   c   → open create-incident dialog
  *   ?   → open shortcuts help
  *   esc → close any modal
@@ -46,7 +46,7 @@ export function useKeyboardShortcuts({ onCreateIncident } = {}) {
         if (key === 'd') return navigate('/app/dashboard');
         if (key === 'i') return navigate('/app/incidents');
         if (key === 't') return navigate('/app/team');
-        if (key === 's') return navigate('/status/sentinel-demo');
+        if (key === 's') return navigate('/status/opswatch-demo');
         return;
       }
 

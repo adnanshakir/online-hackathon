@@ -9,8 +9,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-export const APP_NAME = 'Sentinel';
-export const APP_TAGLINE = 'Resolve incidents 10x faster.';
+export const APP_NAME = 'OpsWatch';
+export const APP_TAGLINE = 'Your incident control room.';
 
 export const SEVERITY = {
   critical: {

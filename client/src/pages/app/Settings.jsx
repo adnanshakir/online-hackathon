@@ -87,7 +87,7 @@ export default function Settings() {
                 <Avatar user={user || { name: 'Demo User' }} size="xl" />
                 <div>
                   <div className="text-base font-semibold">{user?.name || 'Demo User'}</div>
-                  <div className="text-xs text-[var(--color-muted)]">{user?.email || 'demo@sentinel.dev'}</div>
+                  <div className="text-xs text-[var(--color-muted)]">{user?.email || 'demo@opswatch.dev'}</div>
                 </div>
               </div>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -97,7 +97,7 @@ export default function Settings() {
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input defaultValue={user?.email || 'demo@sentinel.dev'} />
+                  <Input defaultValue={user?.email || 'demo@opswatch.dev'} />
                 </div>
               </div>
               <Button
@@ -121,13 +121,13 @@ export default function Settings() {
               <div className="mt-5 space-y-3">
                 <div className="space-y-2">
                   <Label>Workspace name</Label>
-                  <Input defaultValue="Sentinel Demo" />
+                  <Input defaultValue="OpsWatch Demo" />
                 </div>
                 <div className="space-y-2">
                   <Label>Workspace slug</Label>
-                  <Input defaultValue="sentinel-demo" />
+                  <Input defaultValue="opswatch-demo" />
                   <p className="text-[11px] text-[var(--color-muted)]">
-                    Public status page: /status/sentinel-demo
+                    Public status page: /status/opswatch-demo
                   </p>
                 </div>
               </div>

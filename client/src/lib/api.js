@@ -1,56 +1,216 @@
 /**
  * API abstraction layer.
  *
- * Today: backed by Zustand + localStorage (no real backend yet).
- * Tomorrow: when the backend team has endpoints ready, swap each function's
- * body to use `fetch()` — every component already calls through this module,
- * so the rest of the codebase doesn't change.
+ * Wired to the real backend for endpoints that exist:
+ *   - Auth: login / register / logout / refresh-token / google redirect
+ *   - Incidents: list / get / create / changeStatus / assignUsers
+ *   - Timeline: getTimeline / postUpdate
  *
- * Naming convention: <verb><Resource>(<args>) → returns a Promise.
- * All functions return Promises (even if synchronous today) so the swap is seamless.
+ * Still mock-backed (backend hasn't built these yet):
+ *   - listUsers / getUser           → from `client/src/data/users.js`
+ *   - listServices / getService     → from `client/src/data/services.js`
+ *   - getIncidentPostmortem         → from `client/src/data/postmortems.js`
+ *   - updateIncident (general PATCH) → in-memory store
+ *   - me() / getCurrentUser          → falls back to authStore (no /me endpoint yet)
+ *
+ * Vite proxy forwards `/api/*` to `http://localhost:3000` (see vite.config.js)
+ * so the browser sees cookies as same-origin and they flow automatically.
  */
 
+import axios from 'axios';
 import { useIncidentsStore } from '@/store/incidentsStore';
+import { useAuthStore } from '@/store/authStore';
 import { USERS, getUserById } from '@/data/users';
 import { SERVICES, getServiceById } from '@/data/services';
 import { getPostmortem } from '@/data/postmortems';
 
-const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+/* ────────── Axios client ────────── */
+
+const http = axios.create({
+  baseURL: '/api',
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// On 401, try the refresh-token endpoint once and retry the original request.
+// Prevents an infinite refresh loop with the `_retried` flag.
+http.interceptors.response.use(
+  (r) => r,
+  async (err) => {
+    const original = err.config;
+    if (
+      err.response?.status === 401 &&
+      original &&
+      !original._retried &&
+      !original.url.includes('/auth/')
+    ) {
+      original._retried = true;
+      try {
+        await http.post('/auth/refresh-token');
+        return http(original);
+      } catch {
+        // refresh failed — let the original 401 propagate
+      }
+    }
+    throw err;
+  }
+);
+
+/* ────────── Transformers ────────── */
+
+/** Backend incident → frontend shape (preserves what existing components expect). */
+function toIncident(raw) {
+  if (!raw) return null;
+  return {
+    id: raw._id || raw.id,
+    title: raw.title,
+    description: raw.description,
+    severity: raw.severity,
+    status: raw.status,
+    serviceIds: raw.service ? [raw.service] : [],
+    createdById: raw.createdBy?._id || raw.createdBy?.id || raw.createdBy,
+    createdByName: raw.createdBy?.name,
+    createdByEmail: raw.createdBy?.email,
+    assigneeIds: (raw.assignedTo || []).map((u) => u?._id || u?.id || u),
+    assigneeUsers: (raw.assignedTo || [])
+      .filter((u) => typeof u === 'object')
+      .map((u) => ({ id: u._id, name: u.name, email: u.email })),
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+    resolvedAt: raw.status === 'resolved' ? raw.updatedAt : null,
+    affectedUsers: 0, // not tracked by backend yet
+    updates: [], // fetched separately via getTimeline
+    postmortem: null,
+  };
+}
+
+/** Backend update → frontend shape. */
+function toUpdate(raw) {
+  if (!raw) return null;
+  // For status_change rows the backend writes "Status changed to <status>"
+  // Pull the new status out so the timeline UI can render a status badge.
+  let statusChange = null;
+  if (raw.type === 'status_change') {
+    const m = /Status changed to (\w+)/i.exec(raw.message || '');
+    if (m) statusChange = m[1].toLowerCase();
+  }
+  return {
+    id: raw._id || raw.id,
+    authorId: raw.createdBy?._id || raw.createdBy?.id || raw.createdBy,
+    authorName: raw.createdBy?.name,
+    authorEmail: raw.createdBy?.email,
+    message: raw.message,
+    type: raw.type,
+    statusChange,
+    createdAt: raw.createdAt,
+  };
+}
+
+function toUser(raw) {
+  if (!raw) return null;
+  return {
+    id: raw._id || raw.id,
+    name: raw.name,
+    email: raw.email,
+    role: raw.role,
+    avatar: raw.avatar,
+    authProviders: raw.authProviders,
+  };
+}
 
 /* ────────── Incidents ────────── */
 
 export async function listIncidents({ filter = 'all' } = {}) {
-  const all = useIncidentsStore.getState().incidents;
-  if (filter === 'active') return all.filter((i) => i.status !== 'resolved');
-  if (filter === 'resolved') return all.filter((i) => i.status === 'resolved');
-  return all;
+  const { data } = await http.get('/incidents');
+  const incidents = data.map(toIncident);
+  if (filter === 'active') return incidents.filter((i) => i.status !== 'resolved');
+  if (filter === 'resolved') return incidents.filter((i) => i.status === 'resolved');
+  return incidents;
 }
 
 export async function getIncident(id) {
-  return useIncidentsStore.getState().incidents.find((i) => i.id === id) || null;
+  const { data } = await http.get(`/incidents/${id}`);
+  return toIncident(data);
 }
 
 export async function createIncident(payload) {
-  await delay(280);
-  return useIncidentsStore.getState().createIncident(payload);
-}
+  // Backend wants { title, description, service: <single string>, severity }.
+  // Frontend's NewIncidentDialog sends serviceIds (array) + assigneeIds.
+  // We send only the first service today; if assignees were provided we follow
+  // up with PATCH /assign so the backend can validate + create its log entry.
+  const body = {
+    title: payload.title,
+    description: payload.description,
+    severity: payload.severity || 'low',
+    service: (payload.serviceIds && payload.serviceIds[0]) || 'general',
+  };
+  const { data } = await http.post('/incidents', body);
+  let incident = toIncident(data);
 
-export async function postUpdate(incidentId, update) {
-  await delay(220);
-  return useIncidentsStore.getState().postUpdate(incidentId, update);
+  if (payload.assigneeIds?.length) {
+    const { data: assigned } = await http.patch(
+      `/incidents/${incident.id}/assign`,
+      { assignedTo: payload.assigneeIds }
+    );
+    incident = toIncident(assigned);
+  }
+
+  return incident;
 }
 
 export async function changeStatus(incidentId, status) {
-  await delay(160);
-  return useIncidentsStore.getState().changeStatus(incidentId, status);
+  const { data } = await http.patch(`/incidents/${incidentId}/status`, { status });
+  return toIncident(data);
 }
 
+export async function assignUsers(incidentId, assignedTo) {
+  const { data } = await http.patch(`/incidents/${incidentId}/assign`, {
+    assignedTo,
+  });
+  return toIncident(data);
+}
+
+/**
+ * Mock-only: backend exposes no general PATCH /:id, only /status and /assign.
+ * Kept here so call sites compile; flagged so we know to ask backend later.
+ */
 export async function updateIncident(incidentId, patch) {
-  await delay(160);
   return useIncidentsStore.getState().updateIncident(incidentId, patch);
 }
 
-/* ────────── Users / Team ────────── */
+/* ────────── Timeline ────────── */
+
+export async function getTimeline(incidentId) {
+  const { data } = await http.get(`/incidents/${incidentId}/updates`);
+  return data.map(toUpdate);
+}
+
+export async function postUpdate(incidentId, update) {
+  const body = {
+    message: update.message,
+    // Frontend uses statusChange for the "post + change status" combo flow.
+    // If statusChange is set, do TWO calls: change status (which auto-logs),
+    // then post the user's note as a comment. Otherwise post a plain log/comment.
+    type: update.type || 'log',
+  };
+  if (update.statusChange) {
+    await http.patch(`/incidents/${incidentId}/status`, {
+      status: update.statusChange,
+    });
+    if (update.message?.trim()) {
+      await http.post(`/incidents/${incidentId}/updates`, {
+        message: update.message,
+        type: 'comment',
+      });
+    }
+    // Return the latest incident so the caller can refresh local state.
+    return getIncident(incidentId);
+  }
+  const { data } = await http.post(`/incidents/${incidentId}/updates`, body);
+  return toUpdate(data);
+}
+
+/* ────────── Users / Team (still mock — no GET /users yet) ────────── */
 
 export async function listUsers() {
   return USERS;
@@ -60,7 +220,7 @@ export async function getUser(id) {
   return getUserById(id) || null;
 }
 
-/* ────────── Services ────────── */
+/* ────────── Services (still mock — no Service model yet) ────────── */
 
 export async function listServices() {
   return SERVICES;
@@ -70,10 +230,95 @@ export async function getService(id) {
   return getServiceById(id) || null;
 }
 
-/* ────────── Postmortems ────────── */
+/* ────────── Postmortems (still mock — no Postmortem model yet) ────────── */
 
 export async function getIncidentPostmortem(incidentId) {
-  const incident = await getIncident(incidentId);
-  if (!incident?.postmortem) return null;
-  return getPostmortem(incident.postmortem);
+  const local = useIncidentsStore
+    .getState()
+    .incidents.find((i) => i.id === incidentId);
+  if (!local?.postmortem) return null;
+  return getPostmortem(local.postmortem);
 }
+
+/* ────────── Auth ────────── */
+
+/**
+ * @backend  POST /api/auth/login   { email, password }
+ * Sets httpOnly cookies (accessToken + refreshToken). Returns the user.
+ * Side-effect: writes user into authStore so the rest of the app can read it.
+ */
+export async function login({ email, password }) {
+  const { data } = await http.post('/auth/login', { email, password });
+  const user = toUser(data.user);
+  useAuthStore.getState().setUser(user);
+  return user;
+}
+
+/**
+ * @backend  POST /api/auth/register   { name, email, password }
+ * 201 → cookies set + user returned. 409 if email taken.
+ */
+export async function register({ name, email, password }) {
+  const { data } = await http.post('/auth/register', { name, email, password });
+  const user = toUser(data.user);
+  useAuthStore.getState().setUser(user);
+  return user;
+}
+
+/**
+ * @backend  POST /api/auth/logout
+ * Clears cookies + DB refresh token. Frontend also clears the local store.
+ */
+export async function logout() {
+  try {
+    await http.post('/auth/logout');
+  } catch {
+    // Even if the network call fails, clear local state so the user isn't stuck.
+  }
+  useAuthStore.getState().clear();
+}
+
+/**
+ * @backend  POST /api/auth/refresh-token  (refresh cookie required)
+ * Used by the response interceptor; rarely called directly.
+ */
+export async function refreshToken() {
+  await http.post('/auth/refresh-token');
+  return { ok: true };
+}
+
+/**
+ * @backend  GET /api/auth/me   (NOT BUILT YET — pending backend ticket)
+ *
+ * For now we attempt /me anyway; if the route 404s we fall back to whatever's
+ * in localStorage. Once backend ships the endpoint this becomes the source of
+ * truth on every page load.
+ */
+export async function me() {
+  try {
+    const { data } = await http.get('/auth/me');
+    const user = toUser(data.user || data);
+    useAuthStore.getState().setUser(user);
+    return user;
+  } catch {
+    // Backend doesn't have /me yet, or session is invalid — fall back to local.
+    return useAuthStore.getState().user || null;
+  }
+}
+
+/**
+ * URL the "Continue with Google" button should redirect to. Backend handles
+ * the OAuth dance and bounces back to FRONTEND_URL with cookies set.
+ */
+export function googleAuthUrl() {
+  return '/api/auth/google';
+}
+
+export const auth = {
+  login,
+  register,
+  logout,
+  refreshToken,
+  me,
+  googleAuthUrl,
+};
