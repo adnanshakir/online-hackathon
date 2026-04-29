@@ -3,7 +3,6 @@ dotenv.config();
 
 const requiredEnv = [
   'MONGO_URI',
-  'JWT_SECRET',
   'NODE_ENV',
   'ACCESS_TOKEN_SECRET',
   'ACCESS_TOKEN_EXPIRY',

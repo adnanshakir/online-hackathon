@@ -1,5 +1,6 @@
 import { Incident } from '../models/incident.model.js';
 import { Update } from '../models/update.model.js';
+import { User } from '../models/user.model.js';
 import AppError from '../utils/appError.js';
 
 export const createIncident = async (req, res, next) => {
@@ -65,6 +66,18 @@ export const assignUsers = async (req, res, next) => {
     }
 
     if (req.body.assignedTo) {
+      // Validate that all user IDs exist in the database
+      const validUsersCount = await User.countDocuments({
+        _id: { $in: req.body.assignedTo },
+      });
+
+      if (validUsersCount !== req.body.assignedTo.length) {
+        throw new AppError(
+          'One or more User IDs are invalid or do not exist',
+          400
+        );
+      }
+
       incident.assignedTo = req.body.assignedTo;
     }
 
