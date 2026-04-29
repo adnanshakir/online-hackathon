@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { config } from '../config/config.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -6,6 +9,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      minlength: 2,
+      maxlength: 50,
     },
 
     email: {
@@ -13,14 +18,23 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Please use a valid email address'],
+      index: true,
     },
 
     password: {
       type: String,
       select: false,
+      minlength: 8,
       required: function () {
         return this.provider === 'local';
       },
+    },
+
+    refreshToken: {
+      type: String,
+      select: false,
     },
 
     provider: {
@@ -31,6 +45,7 @@ const userSchema = new mongoose.Schema(
 
     googleId: {
       type: String,
+      index: true,
     },
 
     role: {
@@ -39,9 +54,69 @@ const userSchema = new mongoose.Schema(
       default: 'member',
     },
 
-    avatar: String,
+    avatar: {
+      type: String,
+      default: null,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+    toJSON: {
+      transform: function (doc, ret) {
+        delete ret.password;
+        delete ret.refreshToken;
+        return ret;
+      },
+    },
+  }
 );
 
+/**
+ * Hash password before saving (safety net)
+ */
+userSchema.pre('save', async function () {
+  if (!this.isModified('password') || this.provider !== 'local') {
+    return;
+  }
+
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+/**
+ * Compare password method
+ */
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      id: this._id,
+      email: this.email,
+      role: this.role,
+    },
+    config.ACCESS_TOKEN_SECRET,
+    { expiresIn: config.ACCESS_TOKEN_EXPIRY }
+  );
+};
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      id: this._id,
+    },
+    config.REFRESH_TOKEN_SECRET,
+    { expiresIn: config.REFRESH_TOKEN_EXPIRY }
+  );
+};
+
 export const User = mongoose.model('User', userSchema);
+

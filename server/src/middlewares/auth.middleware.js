@@ -5,17 +5,32 @@ import AppError from '../utils/appError.js';
 
 export const authenticate = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    const token =
+      req.cookies?.accessToken ||
+      req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      throw new AppError('Unauthorized', 401);
+      throw new AppError('Authentication required', 401);
     }
 
-    const payload = jwt.verify(token, config.JWT_SECRET);
+    let payload;
+    try {
+      payload = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        throw new AppError('Access token expired', 401);
+      }
+      throw new AppError('Invalid access token', 401);
+    }
+
     const user = await User.findById(payload.id);
 
     if (!user) {
-      throw new AppError('Unauthorized', 401);
+      throw new AppError('User no longer exists', 401);
+    }
+
+    if (!user.isActive) {
+      throw new AppError('Account is disabled', 403);
     }
 
     req.user = user;
