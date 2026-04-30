@@ -1,9 +1,14 @@
 import { Router } from 'express';
+import { authenticate } from '../middlewares/auth.middleware.js';
+import { requireWorkspace } from '../middlewares/workspace.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { addUpdateSchema } from '../validators/update.validator.js';
 import { addUpdate, getUpdates } from '../controllers/update.controller.js';
 
 const router = Router({ mergeParams: true });
+
+router.use(authenticate);
+router.use(requireWorkspace);
 
 /*
     @route   POST /api/incidents/:id/updates

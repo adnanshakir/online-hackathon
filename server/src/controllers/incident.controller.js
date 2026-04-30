@@ -8,6 +8,7 @@ export const createIncident = async (req, res, next) => {
     const incident = await Incident.create({
       ...req.body,
       createdBy: req.user._id,
+      workspace: req.user.workspace,
     });
 
     await incident.populate('createdBy', 'name email');
@@ -28,7 +29,9 @@ export const getIncidents = async (req, res, next) => {
       assigned,
     } = req.query;
 
-    const query = {};
+    const query = {
+      workspace: req.user.workspace,
+    };
 
     // filters
     if (status) query.status = status;
@@ -79,11 +82,10 @@ export const updateIncidentStatus = async (req, res, next) => {
     const { status } = req.body;
 
     // Fetch incident first to check access
-    const incident = await Incident.findById(req.params.id);
-
-    if (incident.status === status) {
-      return res.status(200).json(incident);
-    }
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    });
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
@@ -94,7 +96,7 @@ export const updateIncidentStatus = async (req, res, next) => {
       (id) => id.toString() === req.user._id.toString()
     );
 
-    if (req.user.role !== 'admin' && !isAssigned) {
+    if (!['admin', 'owner'].includes(req.user.role) && !isAssigned) {
       throw new AppError('Forbidden', 403);
     }
 
@@ -109,6 +111,7 @@ export const updateIncidentStatus = async (req, res, next) => {
     // Record status transitions in the incident timeline.
     await Update.create({
       incident: incident._id,
+      workspace: req.user.workspace,
       message: `Status changed to ${status}`,
       type: 'status_change',
       createdBy: req.user._id,
@@ -123,11 +126,14 @@ export const updateIncidentStatus = async (req, res, next) => {
 export const assignUsers = async (req, res, next) => {
   try {
     // Check access: admin only
-    if (req.user.role !== 'admin') {
+    if (!['admin', 'owner'].includes(req.user.role)) {
       throw new AppError('Forbidden', 403);
     }
 
-    const incident = await Incident.findById(req.params.id);
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    });
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
@@ -154,6 +160,7 @@ export const assignUsers = async (req, res, next) => {
     // Log assignment update
     await Update.create({
       incident: incident._id,
+      workspace: req.user.workspace,
       message: 'Users assigned/updated',
       type: 'log',
       createdBy: req.user._id,
@@ -170,7 +177,10 @@ export const assignUsers = async (req, res, next) => {
 
 export const getIncidentById = async (req, res, next) => {
   try {
-    const incident = await Incident.findById(req.params.id)
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    })
       .populate('createdBy', 'name email')
       .populate('assignedTo', 'name email');
 

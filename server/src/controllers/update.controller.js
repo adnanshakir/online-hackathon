@@ -5,7 +5,10 @@ import AppError from '../utils/appError.js';
 export const addUpdate = async (req, res, next) => {
   try {
     // Fetch incident first to check access
-    const incident = await Incident.findById(req.params.id);
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    });
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
@@ -16,12 +19,13 @@ export const addUpdate = async (req, res, next) => {
       (id) => id.toString() === req.user._id.toString()
     );
 
-    if (req.user.role !== 'admin' && !isAssigned) {
+    if (!['admin', 'owner'].includes(req.user.role) && !isAssigned) {
       throw new AppError('Forbidden', 403);
     }
 
     const update = await Update.create({
       incident: req.params.id,
+      workspace: req.user.workspace,
       createdBy: req.user._id,
       message: req.body.message,
       type: req.body.type || 'log',
@@ -35,7 +39,10 @@ export const addUpdate = async (req, res, next) => {
 
 export const getUpdates = async (req, res, next) => {
   try {
-    const incident = await Incident.findById(req.params.id);
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    });
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
@@ -45,11 +52,14 @@ export const getUpdates = async (req, res, next) => {
       (id) => id.toString() === req.user._id.toString()
     );
 
-    if (req.user.role !== 'admin' && !isAssigned) {
+    if (!['admin', 'owner'].includes(req.user.role) && !isAssigned) {
       throw new AppError('Forbidden', 403);
     }
 
-    const updates = await Update.find({ incident: req.params.id })
+    const updates = await Update.find({
+      incident: req.params.id,
+      workspace: req.user.workspace,
+    })
       .populate('createdBy', 'name email')
       .sort({ createdAt: 1 });
 

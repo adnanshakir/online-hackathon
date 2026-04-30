@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import incidentRoutes from './routes/incident.routes.js';
+import workspaceRoutes from './routes/workspace.routes.js';
 import errorHandler from './middlewares/error.middleware.js';
 import passport from './config/passport.js';
 import { globalLimiter } from './middlewares/rateLimit.middleware.js';
@@ -29,7 +30,7 @@ app.use(
 app.use(
   cors({
     origin: config.FRONTEND_URL,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   })
 );
@@ -49,7 +50,7 @@ app.use(
       `${req.method} ${req.url} -> ${res.statusCode}`,
 
     customErrorMessage: (req, res, err) =>
-      `${req.method} ${req.url} -> ${res.statusCode} ❌`,
+      `${req.method} ${req.url} -> ${res.statusCode} ❌ ${err?.message}`,
   })
 );
 
@@ -85,6 +86,7 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api', authenticate, apiLimiter);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/workspace', workspaceRoutes);
 
 // Central error handling
 app.use(errorHandler);
