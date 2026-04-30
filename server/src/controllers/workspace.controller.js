@@ -71,6 +71,16 @@ export const updateUserRole = async (req, res, next) => {
       throw new AppError('User not in same workspace', 400);
     }
 
+    // ❗ prevent changing owner
+    if (user.role === 'owner') {
+      throw new AppError('Cannot change owner role', 400);
+    }
+
+    // ❗ prevent self role change
+    if (user._id.toString() === req.user._id.toString()) {
+      throw new AppError('Cannot change your own role', 400);
+    }
+
     user.role = role;
     await user.save();
 

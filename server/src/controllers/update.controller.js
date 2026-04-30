@@ -4,10 +4,6 @@ import AppError from '../utils/appError.js';
 
 export const addUpdate = async (req, res, next) => {
   try {
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
-    }
-
     // Fetch incident first to check access
     const incident = await Incident.findOne({
       _id: req.params.id,
@@ -43,10 +39,6 @@ export const addUpdate = async (req, res, next) => {
 
 export const getUpdates = async (req, res, next) => {
   try {
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
-    }
-
     const incident = await Incident.findOne({
       _id: req.params.id,
       workspace: req.user.workspace,

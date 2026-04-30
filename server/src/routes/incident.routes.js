@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import validate from '../middlewares/validate.middleware.js';
 import { authenticate } from '../middlewares/auth.middleware.js';
+import { requireWorkspace } from '../middlewares/workspace.middleware.js';
 import {
   assignUsersSchema,
   createIncidentSchema,
@@ -20,6 +21,7 @@ import { apiLimiter } from '../middlewares/rateLimit.middleware.js';
 const router = Router();
 
 router.use(authenticate);
+router.use(requireWorkspace);
 router.use(apiLimiter);
 
 /** @route POST /api/incidents

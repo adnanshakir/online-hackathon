@@ -5,10 +5,6 @@ import AppError from '../utils/appError.js';
 
 export const createIncident = async (req, res, next) => {
   try {
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
-    }
-
     const incident = await Incident.create({
       ...req.body,
       createdBy: req.user._id,
@@ -24,10 +20,6 @@ export const createIncident = async (req, res, next) => {
 
 export const getIncidents = async (req, res, next) => {
   try {
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
-    }
-
     const {
       status,
       severity,
@@ -87,10 +79,6 @@ export const getIncidents = async (req, res, next) => {
 
 export const updateIncidentStatus = async (req, res, next) => {
   try {
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
-    }
-
     const { status } = req.body;
 
     // Fetch incident first to check access
@@ -101,10 +89,6 @@ export const updateIncidentStatus = async (req, res, next) => {
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
-    }
-
-    if (incident.status === status) {
-      return res.status(200).json(incident);
     }
 
     // Check access: admin or assigned to incident
@@ -144,10 +128,6 @@ export const assignUsers = async (req, res, next) => {
     // Check access: admin only
     if (!['admin', 'owner'].includes(req.user.role)) {
       throw new AppError('Forbidden', 403);
-    }
-
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
     }
 
     const incident = await Incident.findOne({
@@ -197,10 +177,6 @@ export const assignUsers = async (req, res, next) => {
 
 export const getIncidentById = async (req, res, next) => {
   try {
-    if (!req.user.workspace) {
-      throw new AppError('No workspace assigned', 400);
-    }
-
     const incident = await Incident.findOne({
       _id: req.params.id,
       workspace: req.user.workspace,
