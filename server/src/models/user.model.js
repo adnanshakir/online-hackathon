@@ -48,9 +48,14 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    workspace: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Workspace',
+    },
+
     role: {
       type: String,
-      enum: ['admin', 'member'],
+      enum: ['owner', 'admin', 'member'],
       default: 'member',
     },
 
@@ -119,5 +124,3 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 export const User = mongoose.model('User', userSchema);
-
-

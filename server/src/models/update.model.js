@@ -21,6 +21,13 @@ const updateSchema = new mongoose.Schema(
       default: 'log',
     },
 
+    workspace: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Workspace',
+      required: true,
+      index: true,
+    },
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
