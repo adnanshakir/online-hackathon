@@ -10,6 +10,7 @@ export const createIncident = async (req, res, next) => {
       createdBy: req.user._id,
     });
 
+    await incident.populate('createdBy', 'name email');
     return res.status(201).json(incident);
   } catch (error) {
     return next(error);
@@ -18,12 +19,56 @@ export const createIncident = async (req, res, next) => {
 
 export const getIncidents = async (req, res, next) => {
   try {
-    const incidents = await Incident.find()
-      .populate('createdBy', 'name email')
-      .populate('assignedTo', 'name email')
-      .sort({ createdAt: -1 });
+    const {
+      status,
+      severity,
+      search,
+      page = 1,
+      limit = 10,
+      assigned,
+    } = req.query;
 
-    return res.status(200).json(incidents);
+    const query = {};
+
+    // filters
+    if (status) query.status = status;
+    if (severity) query.severity = severity;
+
+    // 🔥 my incidents filter
+    if (assigned === 'me') {
+      query.assignedTo = req.user._id;
+    }
+
+    // search
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [incidents, total] = await Promise.all([
+      Incident.find(query)
+        .populate('createdBy', 'name email')
+        .populate('assignedTo', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+
+      Incident.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      data: incidents,
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     return next(error);
   }
@@ -33,15 +78,33 @@ export const updateIncidentStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
 
-    const incident = await Incident.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    // Fetch incident first to check access
+    const incident = await Incident.findById(req.params.id);
+
+    if (incident.status === status) {
+      return res.status(200).json(incident);
+    }
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
     }
+
+    // Check access: admin or assigned to incident
+    const isAssigned = incident.assignedTo.some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+
+    if (req.user.role !== 'admin' && !isAssigned) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    if (incident.status === status) {
+      return res.status(200).json(incident);
+    }
+
+    // Update status
+    incident.status = status;
+    await incident.save();
 
     // Record status transitions in the incident timeline.
     await Update.create({
@@ -59,13 +122,18 @@ export const updateIncidentStatus = async (req, res, next) => {
 
 export const assignUsers = async (req, res, next) => {
   try {
+    // Check access: admin only
+    if (req.user.role !== 'admin') {
+      throw new AppError('Forbidden', 403);
+    }
+
     const incident = await Incident.findById(req.params.id);
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
     }
 
-    if (req.body.assignedTo) {
+    if (Array.isArray(req.body.assignedTo)) {
       // Validate that all user IDs exist in the database
       const validUsersCount = await User.countDocuments({
         _id: { $in: req.body.assignedTo },
@@ -83,7 +151,7 @@ export const assignUsers = async (req, res, next) => {
 
     await incident.save();
 
-    // optional: log assignment update
+    // Log assignment update
     await Update.create({
       incident: incident._id,
       message: 'Users assigned/updated',

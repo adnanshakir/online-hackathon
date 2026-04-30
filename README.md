@@ -2,6 +2,8 @@
 
 **OpsWatch** is a lightweight incident management platform that helps teams track, manage, and resolve outages efficiently using structured timelines and AI-powered insights.
 
+<img width="1919" height="974" alt="image" src="https://github.com/user-attachments/assets/88be7dcf-856c-46a7-a35b-1e5a1b29262f" />
+
 ---
 
 ## 🚀 Overview

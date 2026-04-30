@@ -28,7 +28,22 @@ router.post(
   validate(createIncidentSchema),
   createIncident
 );
+/** @route POST /api/incidents
+ * @desc Create a new incident
+ * @access Private
+ */
+router.post('/', validate(createIncidentSchema), createIncident);
+
+/** @route GET /api/incidents
+ * @desc Get all incidents
+ * @access Private
+ */
 router.get('/', getIncidents);
+
+/** @route GET /api/incidents/:id
+ * @desc Get incident by ID
+ * @access Private
+ */
 router.get('/:id', getIncidentById);
 router.patch(
   '/:id/status',

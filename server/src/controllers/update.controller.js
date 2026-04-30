@@ -4,10 +4,20 @@ import AppError from '../utils/appError.js';
 
 export const addUpdate = async (req, res, next) => {
   try {
-    const exists = await Incident.exists({ _id: req.params.id });
+    // Fetch incident first to check access
+    const incident = await Incident.findById(req.params.id);
 
-    if (!exists) {
+    if (!incident) {
       throw new AppError('Incident not found', 404);
+    }
+
+    // Check access: admin or assigned to incident
+    const isAssigned = incident.assignedTo.some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+
+    if (req.user.role !== 'admin' && !isAssigned) {
+      throw new AppError('Forbidden', 403);
     }
 
     const update = await Update.create({
@@ -25,6 +35,20 @@ export const addUpdate = async (req, res, next) => {
 
 export const getUpdates = async (req, res, next) => {
   try {
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      throw new AppError('Incident not found', 404);
+    }
+
+    const isAssigned = incident.assignedTo.some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+
+    if (req.user.role !== 'admin' && !isAssigned) {
+      throw new AppError('Forbidden', 403);
+    }
+
     const updates = await Update.find({ incident: req.params.id })
       .populate('createdBy', 'name email')
       .sort({ createdAt: 1 });
