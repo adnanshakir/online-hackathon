@@ -1,14 +1,20 @@
 import { Router } from 'express';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import {
+  authenticate,
+  requireVerification,
+} from '../middlewares/auth.middleware.js';
 import {
   createWorkspace,
   joinWorkspace,
   updateUserRole,
 } from '../controllers/workspace.controller.js';
+import { apiLimiter } from '../middlewares/rateLimit.middleware.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(requireVerification);
+router.use(apiLimiter);
 
 /**
  * @route POST /api/workspace/create

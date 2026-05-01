@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import incidentRoutes from './routes/incident.routes.js';
 import workspaceRoutes from './routes/workspace.routes.js';
+import statusRoutes from './routes/status.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 import errorHandler from './middlewares/error.middleware.js';
 import passport from './config/passport.js';
 import { globalLimiter } from './middlewares/rateLimit.middleware.js';
@@ -11,8 +13,6 @@ import helmet from 'helmet';
 import mongoSanitize from '@exortek/express-mongo-sanitize';
 import { xss } from 'express-xss-sanitizer';
 import pinoHttp from 'pino-http';
-import { apiLimiter } from './middlewares/rateLimit.middleware.js';
-import { authenticate } from './middlewares/auth.middleware.js';
 import { config } from './config/config.js';
 
 const app = express();
@@ -84,9 +84,10 @@ app.use(passport.initialize());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api', authenticate, apiLimiter);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/workspace', workspaceRoutes);
+app.use('/api/status', statusRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Central error handling
 app.use(errorHandler);

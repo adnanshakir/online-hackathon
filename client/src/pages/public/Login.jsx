@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Logo } from '@/components/shared/Logo';
 import { fadeUp } from '@/components/motion/variants';
 import { toast } from 'sonner';
 import * as api from '@/lib/api';
+import { enableDemoMode } from '@/lib/demo';
 
 import { useAuthStore } from '@/store/authStore';
 import { useEffect } from 'react';
@@ -18,6 +19,12 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const handleDemoLogin = () => {
+    enableDemoMode();
+    toast.success('Demo session started — explore freely.');
+    navigate('/app/dashboard');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,18 +61,38 @@ export default function Login() {
         animate="visible"
         className="flex flex-col px-6 py-10 md:px-12"
       >
-        <Link to="/" className="inline-flex">
-          <Logo />
-        </Link>
+        <Logo />
+
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
           <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Sign in to your team workspace.
           </p>
 
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            className="mt-6 group flex w-full items-center justify-between gap-3 rounded-lg border border-[var(--color-brand-primary)]/40 bg-[var(--color-brand-primary)]/10 px-4 py-3 text-left transition-colors hover:border-[var(--color-brand-primary)]/70 hover:bg-[var(--color-brand-primary)]/15"
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex size-8 items-center justify-center rounded-md bg-[var(--color-brand-primary)]/20 text-[var(--color-brand-primary)]">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-[var(--color-foreground)]">
+                  Try the demo account
+                </span>
+                <span className="mt-0.5 block text-[11px] text-[var(--color-muted-strong)]">
+                  No signup — explore the full product instantly.
+                </span>
+              </span>
+            </span>
+            <ArrowRight className="h-4 w-4 text-[var(--color-brand-primary)] transition-transform group-hover:translate-x-0.5" />
+          </button>
+
           <Button
             variant="outline"
-            className="mt-6 w-full"
+            className="mt-3 w-full"
             onClick={() => {
               window.location.href = api.googleAuthUrl();
             }}
@@ -135,9 +162,6 @@ export default function Login() {
               <Link to="/signup" className="font-medium text-[var(--color-foreground)] hover:underline">
                 Create one
               </Link>
-            </p>
-            <p className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 px-3 py-2 text-center text-[11px] text-[var(--color-muted)]">
-              Demo creds pre-filled · any email/password works
             </p>
           </form>
         </div>

@@ -109,10 +109,10 @@ export default function PublicStatus() {
       {/* Top bar */}
       <header className="border-b border-[var(--color-border)] bg-[var(--color-background)]/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-4">
-          <Link to="/" className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5">
             <Logo />
             <span className="hidden text-xs text-[var(--color-muted)] md:inline">/ Status</span>
-          </Link>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

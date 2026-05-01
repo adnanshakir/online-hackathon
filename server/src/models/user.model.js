@@ -111,6 +111,7 @@ const userSchema = new mongoose.Schema(
         delete ret.resetPasswordExpires;
         delete ret.verificationToken;
         delete ret.verificationExpires;
+        delete ret.googleId;
         return ret;
       },
     },

@@ -15,7 +15,6 @@ import {
   updateIncidentStatus,
 } from '../controllers/incident.controller.js';
 import updateRoutes from './update.routes.js';
-
 import { apiLimiter } from '../middlewares/rateLimit.middleware.js';
 
 const router = Router();
@@ -24,17 +23,16 @@ router.use(authenticate);
 router.use(requireWorkspace);
 router.use(apiLimiter);
 
+/** @route POST /api/incidents
+ * @desc Create a new incident
+ * @access Private
+ */
 router.post(
   '/',
   requireVerification,
   validate(createIncidentSchema),
   createIncident
 );
-/** @route POST /api/incidents
- * @desc Create a new incident
- * @access Private
- */
-router.post('/', validate(createIncidentSchema), createIncident);
 
 /** @route GET /api/incidents
  * @desc Get all incidents
@@ -47,12 +45,22 @@ router.get('/', getIncidents);
  * @access Private
  */
 router.get('/:id', getIncidentById);
+
+/** @route PATCH /api/incidents/:id/status
+ * @desc Update incident status
+ * @access Private
+ */
 router.patch(
   '/:id/status',
   requireVerification,
   validate(updateStatusSchema),
   updateIncidentStatus
 );
+
+/** @route PATCH /api/incidents/:id/assign
+ * @desc Assign users to incident
+ * @access Private
+ */
 router.patch(
   '/:id/assign',
   requireVerification,

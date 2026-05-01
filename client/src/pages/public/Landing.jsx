@@ -28,6 +28,9 @@ import { APP_NAME } from '@/lib/constants';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import InteractiveGrid from '@/components/ui/InteractiveGrid';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { enableDemoMode } from '@/lib/demo';
 
 import { FAQ_DATA, STATS, STEPS } from '@/data/landingData';
 import { FAQItem } from '@/components/landing/FAQItem';
@@ -45,6 +48,13 @@ export default function Landing() {
   const [openFaq, setOpenFaq] = useState(0);
   const heroRef = useRef(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const startDemo = () => {
+    enableDemoMode();
+    toast.success('Demo session started — explore freely.');
+    navigate('/app/dashboard');
+  };
 
   const handleHeroMouseMove = (e) => {
     if (!heroRef.current) return;
@@ -216,10 +226,13 @@ export default function Landing() {
                   Start managing free <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="xl" className="rounded-full px-5 text-[var(--color-muted-strong)]">
-                <Link to="/login">
-                  See live demo <ArrowRight className="h-4 w-4" />
-                </Link>
+              <Button
+                variant="ghost"
+                size="xl"
+                onClick={startDemo}
+                className="rounded-full px-5 text-[var(--color-muted-strong)]"
+              >
+                See live demo <ArrowRight className="h-4 w-4" />
               </Button>
             </motion.div>
 
