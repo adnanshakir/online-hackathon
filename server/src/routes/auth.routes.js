@@ -9,7 +9,7 @@ import {
   resetPassword,
   verifyEmail,
   resendVerificationEmail,
-  getMe
+  getMe,
 } from '../controllers/auth.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import {
@@ -28,13 +28,6 @@ import {
 } from '../middlewares/rateLimit.middleware.js';
 
 const router = Router();
-
-/*
-    @route   GET /api/auth/me
-    @desc    Get current authenticated user session
-    @access  Private
-*/
-router.get('/me', authenticate, getCurrentUser);
 
 /*
     @route   POST /api/auth/register
