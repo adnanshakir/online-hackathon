@@ -1,37 +1,45 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { config } from '../config/config.js';
-import AppError from '../utils/appError.js';
+import { generateGeminiResponse } from './gemini.service.js';
+import { generateMistralResponse } from './mistral.service.js';
 import { logger } from '../utils/logger.js';
+import AppError from '../utils/appError.js';
 
-const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
+/**
+ * Wraps a promise with a timeout
+ * @param {Promise} promise 
+ * @param {number} ms 
+ */
+const withTimeout = (promise, ms = 3000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), ms)
+    ),
+  ]);
+};
 
-const model = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
-});
-
+/**
+ * Main AI Response generator with Mistral -> Gemini failover
+ * @param {string} prompt 
+ */
 export const generateAIResponse = async (prompt) => {
+  // 1. Try Mistral First
   try {
-    if (!config.GEMINI_API_KEY) {
-      throw new AppError('AI Service: API Key is missing', 500);
+    logger.info('AI Service: Attempting Mistral...');
+    return await withTimeout(generateMistralResponse(prompt), 3000);
+  } catch (mistralError) {
+    logger.warn(`AI Service: Mistral failed (${mistralError.message}). Falling back to Gemini...`);
+
+    // 2. Fallback to Gemini
+    try {
+      logger.info('AI Service: Attempting Gemini...');
+      return await withTimeout(generateGeminiResponse(prompt), 3000);
+    } catch (geminiError) {
+      logger.error(`AI Service: All providers failed. Gemini error: ${geminiError.message}`);
+      
+      throw new AppError(
+        `AI Service failed to generate response. (Mistral: ${mistralError.message}, Gemini: ${geminiError.message})`,
+        500
+      );
     }
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    if (!text) {
-      throw new AppError('AI Service: Empty response from Gemini', 500);
-    }
-
-    return text;
-  } catch (error) {
-    logger.error('Gemini AI Error:', error.message);
-    
-    // Check for specific API key errors
-    if (error.message.includes('API_KEY_INVALID')) {
-      throw new AppError('AI Service: Invalid API Key provided.', 500);
-    }
-
-    throw new AppError('AI Service failed to generate response.', 500);
   }
 };

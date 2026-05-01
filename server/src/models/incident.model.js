@@ -29,9 +29,10 @@ const incidentSchema = new mongoose.Schema(
     },
 
     service: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Service',
       required: true,
-      trim: true,
+      index: true,
     },
 
     workspace: {

@@ -17,6 +17,7 @@ const requiredEnv = [
   'MAIL_REFRESH_TOKEN',
   'MAIL_USER',
   'GEMINI_API_KEY',
+  'MISTRAL_API_KEY',
 ];
 
 requiredEnv.forEach((key) => {

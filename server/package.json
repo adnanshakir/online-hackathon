@@ -14,6 +14,7 @@
   "dependencies": {
     "@exortek/express-mongo-sanitize": "^2.0.2",
     "@google/generative-ai": "^0.24.1",
+    "@mistralai/mistralai": "^2.2.1",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
