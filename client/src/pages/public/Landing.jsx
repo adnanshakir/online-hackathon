@@ -13,6 +13,7 @@ import { LandingStats } from '@/components/landing/LandingStats';
 import { LandingFeatures } from '@/components/landing/LandingFeatures';
 import { LandingHowItWorks } from '@/components/landing/LandingHowItWorks';
 import { LandingTrust } from '@/components/landing/LandingTrust';
+import { LandingCTA } from '@/components/landing/LandingCTA';
 import { LandingFAQ } from '@/components/landing/LandingFAQ';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 
@@ -101,6 +102,8 @@ export default function Landing() {
         </section>
 
         <LandingTrust />
+
+        <LandingCTA />
 
         <LandingFAQ />
       </main>

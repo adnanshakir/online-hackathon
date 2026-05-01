@@ -56,7 +56,7 @@ export function LandingHero() {
             'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)',
         }}
       />
-      <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_1fr] lg:items-center md:gap-16">
+      <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center md:gap-16">
         {/* Left — copy block */}
         <div className="text-center md:text-left">
           <motion.div
@@ -73,7 +73,7 @@ export function LandingHero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 text-[32px] font-bold leading-[1.05] tracking-[-0.02em] xs:text-[40px] md:text-[68px] lg:text-[80px]"
+            className="mt-6 text-[52px] font-bold leading-[1.0] tracking-[-0.04em] xs:text-[52px] md:text-[72px] lg:text-[84px]"
           >
             Outages get <br />
             <span className="whitespace-nowrap text-[var(--color-brand-primary)]">
@@ -85,7 +85,7 @@ export function LandingHero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="mx-auto mt-7 max-w-xl text-[15px] leading-relaxed text-[var(--color-muted-strong)] md:mx-0 md:text-[17px]"
+            className="mx-auto mt-7 max-w-lg text-[15px] leading-relaxed text-[var(--color-muted-strong)] md:mx-0 md:text-[16px]"
           >
             {APP_NAME} is the workspace your on-call team opens when production
             breaks. Live timelines, smart role assignment, and AI briefs that

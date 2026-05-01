@@ -34,7 +34,6 @@ const router = Router();
     @desc    Get current authenticated user session
     @access  Private
 */
-router.get('/me', authenticate, getCurrentUser);
 
 /*
     @route   POST /api/auth/register

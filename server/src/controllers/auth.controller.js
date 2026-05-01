@@ -16,13 +16,17 @@ const cookieOptions = {
 };
 
 const generateTokens = async (user) => {
+  console.log('Generating JWTs for user:', user._id);
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
 
+  console.log('Hashing refresh token...');
   const hashedToken = await bcrypt.hash(refreshToken, 10);
   user.refreshToken = hashedToken;
 
+  console.log('Saving user with updated refresh token...');
   await user.save({ validateBeforeSave: false });
+  console.log('User saved successfully');
 
   return { accessToken, refreshToken };
 };
@@ -63,14 +67,17 @@ export const register = async (req, res, next) => {
         .digest('hex');
 
       existingUser.verificationToken = hashedToken;
-      existingUser.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      existingUser.verificationExpires = new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ); // 24 hours
       existingUser.lastVerificationSentAt = new Date();
 
       await existingUser.save({ validateBeforeSave: false });
       await sendVerificationEmail(email, existingUser.name, verificationToken);
 
       return res.status(200).json({
-        message: 'Account exists but is not verified. A new verification link has been sent to your email.',
+        message:
+          'Account exists but is not verified. A new verification link has been sent to your email.',
       });
     }
 
@@ -107,7 +114,8 @@ export const register = async (req, res, next) => {
     });
 
     return res.status(201).json({
-      message: 'Registration successful! Please check your email to verify your account for full access.',
+      message:
+        'Registration successful! Please check your email to verify your account for full access.',
       user,
     });
   } catch (error) {
@@ -169,12 +177,18 @@ export const refreshAccessToken = async (req, res, next) => {
       throw new AppError('Invalid or expired refresh token', 401);
     }
 
+    console.log('Refreshing token for user ID:', decoded.id);
     const user = await User.findById(decoded.id).select('+refreshToken');
 
-    if (!user || !user.refreshToken) { throw new AppError('Unauthorized', 401); }
+    if (!user || !user.refreshToken) {
+      console.log('User or refresh token not found in DB');
+      throw new AppError('Unauthorized', 401);
+    }
 
+    console.log('Comparing tokens...');
     const isTokenValid = await bcrypt.compare(incomingToken, user.refreshToken);
     if (!isTokenValid) {
+      console.log('Token comparison failed');
       throw new AppError('Refresh token is expired or used', 401);
     }
 
@@ -182,7 +196,9 @@ export const refreshAccessToken = async (req, res, next) => {
       throw new AppError('Account is disabled', 403);
     }
 
+    console.log('Generating new tokens...');
     const { accessToken, refreshToken } = await generateTokens(user);
+    console.log('New tokens generated successfully');
 
     res.cookie('accessToken', accessToken, {
       ...cookieOptions,
@@ -238,7 +254,7 @@ export const googleCallback = async (req, res, next) => {
         user.googleId = googleId;
         updated = true;
       }
-      
+
       if (!user.authProviders.includes('google')) {
         user.authProviders.push('google');
         updated = true;
@@ -418,7 +434,8 @@ export const resendVerificationEmail = async (req, res, next) => {
     if (!user) {
       // Security: Don't reveal if user exists
       return res.status(200).json({
-        message: 'If an account exists with that email, a new verification link was sent.',
+        message:
+          'If an account exists with that email, a new verification link was sent.',
       });
     }
 
@@ -432,13 +449,21 @@ export const resendVerificationEmail = async (req, res, next) => {
     const cooldownPeriod = 60 * 1000;
 
     if (lastSent && now - lastSent < cooldownPeriod) {
-      const remainingTime = Math.ceil((cooldownPeriod - (now - lastSent)) / 1000);
-      throw new AppError(`Please wait ${remainingTime} seconds before requesting another email.`, 429);
+      const remainingTime = Math.ceil(
+        (cooldownPeriod - (now - lastSent)) / 1000
+      );
+      throw new AppError(
+        `Please wait ${remainingTime} seconds before requesting another email.`,
+        429
+      );
     }
 
     // Generate and send
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
 
     user.verificationToken = hashedToken;
     user.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);

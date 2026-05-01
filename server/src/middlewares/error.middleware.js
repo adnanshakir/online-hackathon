@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { ZodError } from 'zod';
 import AppError from '../utils/appError.js';
 import { logger } from '../utils/logger.js';
@@ -15,6 +16,7 @@ export default function errorHandler(error, req, res, next) {
   }
 
   logger.error(error);
+  console.error('SERVER ERROR:', error);
   if (error instanceof mongoose.Error.CastError) {
     return res.status(400).json({
       message: 'Invalid ID format',

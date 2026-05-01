@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion as Motion } from 'motion/react';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,6 @@ import { fadeUp } from '@/components/motion/variants';
 import { toast } from 'sonner';
 import * as api from '@/lib/api';
 import { enableDemoMode } from '@/lib/demo';
-
-import { useAuthStore } from '@/store/authStore';
-import { useEffect } from 'react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -64,7 +61,9 @@ export default function Login() {
         <Logo />
 
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Welcome back
+          </h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Sign in to your team workspace.
           </p>
@@ -91,32 +90,31 @@ export default function Login() {
           </button>
 
           <Button
+            type="button"
             variant="outline"
-            className="mt-3 w-full"
+            className="mt-3 w-full bg-white text-[#1f1f1f] hover:bg-[#f8f9fa] border-[#747775]/30"
             onClick={() => {
               window.location.href = api.googleAuthUrl();
             }}
           >
-            <svg viewBox="0 0 18 18" className="h-4 w-4" aria-hidden>
+            <svg viewBox="0 0 48 48" className="h-4 w-4" aria-hidden>
               <path
-                fill="#fff"
-                d="M17.64 9.2a10.5 10.5 0 0 0-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.79 2.71v2.26h2.9a8.74 8.74 0 0 0 2.69-6.6Z"
+                fill="#EA4335"
+                d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
               />
               <path
-                fill="#fff"
-                d="M9 18a8.6 8.6 0 0 0 5.95-2.18l-2.9-2.26a5.4 5.4 0 0 1-3.04.86 5.36 5.36 0 0 1-5.04-3.71H.92v2.33A9 9 0 0 0 9 18Z"
-                opacity=".55"
+                fill="#4285F4"
+                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
               />
               <path
-                fill="#fff"
-                d="M3.96 10.71a5.4 5.4 0 0 1 0-3.42V4.96H.92a9 9 0 0 0 0 8.08l3.04-2.33Z"
-                opacity=".4"
+                fill="#FBBC05"
+                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"
               />
               <path
-                fill="#fff"
-                d="M9 3.58a4.85 4.85 0 0 1 3.43 1.34l2.57-2.57A8.66 8.66 0 0 0 9 0a9 9 0 0 0-8.08 4.96L3.96 7.3A5.36 5.36 0 0 1 9 3.58Z"
-                opacity=".7"
+                fill="#34A853"
+                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
               />
+              <path fill="none" d="M0 0h48v48H0z" />
             </svg>
             Continue with Google
           </Button>
@@ -141,7 +139,10 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Password</Label>
-                <Link to="#" className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-foreground)]">
+                <Link
+                  to="#"
+                  className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+                >
                   Forgot?
                 </Link>
               </div>
@@ -153,13 +154,21 @@ export default function Login() {
                 autoComplete="current-password"
               />
             </div>
-            <Button variant="gradient" type="submit" className="w-full" disabled={submitting}>
+            <Button
+              variant="gradient"
+              type="submit"
+              className="w-full"
+              disabled={submitting}
+            >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Sign in <ArrowRight className="h-4 w-4" />
             </Button>
             <p className="text-center text-xs text-[var(--color-muted)]">
               Don't have an account?{' '}
-              <Link to="/signup" className="font-medium text-[var(--color-foreground)] hover:underline">
+              <Link
+                to="/signup"
+                className="font-medium text-[var(--color-foreground)] hover:underline"
+              >
                 Create one
               </Link>
             </p>
@@ -192,10 +201,13 @@ export default function Login() {
             </p>
             <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-[-0.03em] xl:text-4xl">
               Step into the workspace your on-call team{' '}
-              <span className="text-[var(--color-brand-primary)]">actually opens.</span>
+              <span className="text-[var(--color-brand-primary)]">
+                actually opens.
+              </span>
             </h2>
             <p className="mt-4 text-[14px] leading-relaxed text-[var(--color-muted-strong)]">
-              Real-time timelines, AI briefs, and one-click postmortems — already in flight.
+              Real-time timelines, AI briefs, and one-click postmortems —
+              already in flight.
             </p>
 
             <AuthIncidentPreview className="mt-8" />
@@ -214,9 +226,24 @@ export default function Login() {
 
 function AuthIncidentPreview({ className = '' }) {
   const items = [
-    { time: '14:02', label: 'investigating', dot: 'bg-red-500', text: 'Elevated 5xx on /api/checkout' },
-    { time: '14:08', label: 'identified', dot: 'bg-orange-500', text: 'Stripe webhook timeout under load' },
-    { time: '14:21', label: 'resolved', dot: 'bg-[var(--color-brand-primary)]', text: '19 min · 0 customer reports' },
+    {
+      time: '14:02',
+      label: 'investigating',
+      dot: 'bg-red-500',
+      text: 'Elevated 5xx on /api/checkout',
+    },
+    {
+      time: '14:08',
+      label: 'identified',
+      dot: 'bg-orange-500',
+      text: 'Stripe webhook timeout under load',
+    },
+    {
+      time: '14:21',
+      label: 'resolved',
+      dot: 'bg-[var(--color-brand-primary)]',
+      text: '19 min · 0 customer reports',
+    },
   ];
 
   const tone = {
@@ -227,7 +254,9 @@ function AuthIncidentPreview({ className = '' }) {
   };
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] ${className}`}>
+    <div
+      className={`overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] ${className}`}
+    >
       <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)] px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
@@ -259,18 +288,29 @@ function AuthIncidentPreview({ className = '' }) {
         </div>
 
         <div className="relative space-y-3">
-          <div aria-hidden className="absolute left-[5px] top-2 bottom-2 w-px bg-[var(--color-border)]" />
+          <div
+            aria-hidden
+            className="absolute left-[5px] top-2 bottom-2 w-px bg-[var(--color-border)]"
+          />
           {items.map((u) => (
             <div key={u.time} className="relative flex items-start gap-3 pl-7">
-              <span className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-[var(--color-surface)] ${u.dot}`} />
+              <span
+                className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-[var(--color-surface)] ${u.dot}`}
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]">{u.time}</span>
-                  <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${tone[u.label]}`}>
+                  <span className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]">
+                    {u.time}
+                  </span>
+                  <span
+                    className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${tone[u.label]}`}
+                  >
                     {u.label}
                   </span>
                 </div>
-                <div className="mt-0.5 truncate text-[12px] text-[var(--color-foreground)]/95">{u.text}</div>
+                <div className="mt-0.5 truncate text-[12px] text-[var(--color-foreground)]/95">
+                  {u.text}
+                </div>
               </div>
             </div>
           ))}

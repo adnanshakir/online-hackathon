@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion as Motion } from 'motion/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -58,15 +58,53 @@ export default function Signup() {
         <Logo />
 
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
-          <h1 className="text-3xl font-semibold tracking-tight">Create your workspace</h1>
-          <p className="mt-1 text-sm text-[var(--color-muted)]">
-            Free for the first 5 teammates. No credit card required.
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Create your workspace
+          </h1>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-6 w-full bg-white text-[#1f1f1f] hover:bg-[#f8f9fa] border-[#747775]/30"
+            onClick={() => {
+              window.location.href = api.googleAuthUrl();
+            }}
+          >
+            <svg viewBox="0 0 48 48" className="h-4 w-4" aria-hidden>
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+              />
+              <path
+                fill="#4285F4"
+                d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24s.92 7.54 2.56 10.78l7.97-6.19z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+              />
+              <path fill="none" d="M0 0h48v48H0z" />
+            </svg>
+            Continue with Google
+          </Button>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <div className="my-6 flex items-center gap-3 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
+            or
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Full name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ada Lovelace" />
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ada Lovelace"
+              />
             </div>
             <div className="space-y-2">
               <Label>Work email</Label>
@@ -88,13 +126,21 @@ export default function Signup() {
                 autoComplete="new-password"
               />
             </div>
-            <Button variant="gradient" type="submit" className="w-full" disabled={submitting}>
+            <Button
+              variant="gradient"
+              type="submit"
+              className="w-full"
+              disabled={submitting}
+            >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Create workspace <ArrowRight className="h-4 w-4" />
             </Button>
             <p className="text-center text-xs text-[var(--color-muted)]">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-[var(--color-foreground)] hover:underline">
+              <Link
+                to="/login"
+                className="font-medium text-[var(--color-foreground)] hover:underline"
+              >
                 Sign in
               </Link>
             </p>
@@ -127,11 +173,13 @@ export default function Signup() {
             </p>
             <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-[-0.03em] xl:text-4xl">
               The calmest 19 minutes{' '}
-              <span className="text-[var(--color-brand-primary)]">your team has ever shipped.</span>
+              <span className="text-[var(--color-brand-primary)]">
+                your team has ever shipped.
+              </span>
             </h2>
             <p className="mt-4 text-[14px] leading-relaxed text-[var(--color-muted-strong)]">
-              Real-time timelines, smart role assignment, AI-generated briefs — production-ready
-              from day one.
+              Real-time timelines, smart role assignment, AI-generated briefs —
+              production-ready from day one.
             </p>
 
             <AuthIncidentPreview className="mt-8" />
@@ -149,9 +197,24 @@ export default function Signup() {
 
 function AuthIncidentPreview({ className = '' }) {
   const items = [
-    { time: '14:02', label: 'investigating', dot: 'bg-red-500', text: 'Elevated 5xx on /api/checkout' },
-    { time: '14:08', label: 'identified', dot: 'bg-orange-500', text: 'Stripe webhook timeout under load' },
-    { time: '14:21', label: 'resolved', dot: 'bg-[var(--color-brand-primary)]', text: '19 min · 0 customer reports' },
+    {
+      time: '14:02',
+      label: 'investigating',
+      dot: 'bg-red-500',
+      text: 'Elevated 5xx on /api/checkout',
+    },
+    {
+      time: '14:08',
+      label: 'identified',
+      dot: 'bg-orange-500',
+      text: 'Stripe webhook timeout under load',
+    },
+    {
+      time: '14:21',
+      label: 'resolved',
+      dot: 'bg-[var(--color-brand-primary)]',
+      text: '19 min · 0 customer reports',
+    },
   ];
 
   const tone = {
@@ -162,7 +225,9 @@ function AuthIncidentPreview({ className = '' }) {
   };
 
   return (
-    <div className={`overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] ${className}`}>
+    <div
+      className={`overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] ${className}`}
+    >
       <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)] px-4 py-2.5">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
@@ -194,18 +259,29 @@ function AuthIncidentPreview({ className = '' }) {
         </div>
 
         <div className="relative space-y-3">
-          <div aria-hidden className="absolute left-[5px] top-2 bottom-2 w-px bg-[var(--color-border)]" />
+          <div
+            aria-hidden
+            className="absolute left-[5px] top-2 bottom-2 w-px bg-[var(--color-border)]"
+          />
           {items.map((u) => (
             <div key={u.time} className="relative flex items-start gap-3 pl-7">
-              <span className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-[var(--color-surface)] ${u.dot}`} />
+              <span
+                className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-[var(--color-surface)] ${u.dot}`}
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]">{u.time}</span>
-                  <span className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${tone[u.label]}`}>
+                  <span className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]">
+                    {u.time}
+                  </span>
+                  <span
+                    className={`rounded border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${tone[u.label]}`}
+                  >
                     {u.label}
                   </span>
                 </div>
-                <div className="mt-0.5 truncate text-[12px] text-[var(--color-foreground)]/95">{u.text}</div>
+                <div className="mt-0.5 truncate text-[12px] text-[var(--color-foreground)]/95">
+                  {u.text}
+                </div>
               </div>
             </div>
           ))}
