@@ -35,6 +35,7 @@ import { CreativeAIBriefShowcase } from '@/components/landing/CreativeAIBriefSho
 import { ScrollRevealParagraph } from '@/components/landing/ScrollReveal';
 import { SpotlightGrid } from '@/components/landing/SpotlightGrid';
 import { DualMarquee } from '@/components/landing/DualMarquee';
+import SecurityShieldShowcase from '@/components/landing/SecurityShieldShowcase';
 import { WorkspacePreview } from '@/components/landing/WorkspacePreview';
 import { SocialIcon } from '@/components/shared/SocialIcon';
 
@@ -42,7 +43,17 @@ export default function Landing() {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const [openFaq, setOpenFaq] = useState(0);
+  const heroRef = useRef(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleHeroMouseMove = (e) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    heroRef.current.style.setProperty('--mouse-x', `${x}px`);
+    heroRef.current.style.setProperty('--mouse-y', `${y}px`);
+  };
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -66,7 +77,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden text-[var(--color-foreground)]">
+    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden select-none text-[var(--color-foreground)]">
       {/* ─── ISLAND PILL NAV ──────────────────────────────────── */}
       <header className="sticky top-4 z-30 mx-auto flex max-w-6xl items-center justify-between px-6 py-3 md:relative md:top-0 md:py-6">
         <Logo />
@@ -93,7 +104,7 @@ export default function Landing() {
           <Button asChild variant="gradient" size="sm" className="rounded-full px-4 hidden xs:inline-flex">
             <Link to="/signup">Get Started</Link>
           </Button>
-          <button 
+          <button
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
             className="inline-flex size-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted-strong)] transition-colors hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)] md:hidden"
@@ -106,7 +117,7 @@ export default function Landing() {
       {/* ─── MOBILE SIDEBAR ──────────────────────────────────── */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm md:hidden">
-          <motion.div 
+          <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -114,34 +125,52 @@ export default function Landing() {
             className="w-[280px] h-full bg-[var(--color-background)] border-l border-[var(--color-border)] p-6 shadow-2xl flex flex-col"
           >
             <div className="flex justify-end">
-               <button 
-                 onClick={() => setIsMobileMenuOpen(false)}
-                 className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-muted-strong)]"
-               >
-                 <X className="h-4 w-4" />
-               </button>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="inline-flex size-8 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-muted-strong)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
             <nav className="mt-12 flex flex-col gap-6 text-lg font-medium text-[var(--color-foreground)]">
-               <a href="#why" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">Why</a>
-               <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">Features</a>
-               <a href="#ai" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">AI Brief</a>
-               <a href="#how" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">How</a>
-               <Link to="/status/opswatch-demo" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">Status</Link>
+              <a href="#why" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">Why</a>
+              <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">Features</a>
+              <a href="#ai" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">AI Brief</a>
+              <a href="#how" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">How</a>
+              <Link to="/status/opswatch-demo" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[var(--color-brand-primary)]">Status</Link>
             </nav>
             <div className="mt-auto pt-6 border-t border-[var(--color-border)] flex flex-col gap-3">
-               <Button asChild variant="ghost" className="justify-center w-full">
-                 <Link to="/login">Sign in</Link>
-               </Button>
-               <Button asChild variant="gradient" className="justify-center w-full rounded-full">
-                 <Link to="/signup">Get Started</Link>
-               </Button>
+              <Button asChild variant="ghost" className="justify-center w-full">
+                <Link to="/login">Sign in</Link>
+              </Button>
+              <Button asChild variant="gradient" className="justify-center w-full rounded-full">
+                <Link to="/signup">Get Started</Link>
+              </Button>
             </div>
           </motion.div>
         </div>
       )}
 
       {/* ─── HERO ─────────────────────────────────────────────── */}
-      <section className="relative px-6 pt-12 pb-24 md:pt-24 md:pb-36">
+      <section
+        ref={heroRef}
+        onMouseMove={handleHeroMouseMove}
+        className="group relative px-6 pt-12 pb-24 md:pt-24 md:pb-36 overflow-hidden"
+      >
+        {/* Base very dim dot grid */}
+        <div className="absolute inset-0 z-0 opacity-[0.03]"
+          style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)', backgroundSize: '24px 24px' }}
+        />
+
+        {/* Spotlight dot grid that reveals on hover */}
+        <div className="absolute inset-0 z-0 opacity-0 transition-opacity duration-500 group-hover:opacity-[0.15]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+            WebkitMaskImage: 'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)',
+            maskImage: 'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)'
+          }}
+        />
         <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_1fr] lg:items-center md:gap-16">
           {/* Left — copy block */}
           <div className="text-center md:text-left">
@@ -429,13 +458,18 @@ export default function Landing() {
       {/* ─── TRUST STRIP ──────────────────────────────────────── */}
       <section className="relative border-y border-[var(--color-border)] px-6 py-24">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-10 md:grid-cols-[1fr_1.5fr] md:items-end">
+          <div className="grid gap-10 md:grid-cols-[1fr_0.8fr_1.2fr] md:items-center">
             <div>
               <p className="font-mono text-[11px] font-medium uppercase tracking-[0.22em] text-[var(--color-brand-primary)]">Trust</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-[44px]">
                 Your data <span className="text-[var(--color-muted)]">stays yours.</span>
               </h2>
             </div>
+
+            <div className="flex justify-center md:justify-start">
+              <SecurityShieldShowcase />
+            </div>
+
             <p className="text-[15px] leading-relaxed text-[var(--color-muted-strong)]">
               Cookie-based sessions with refresh tokens. Isolated team workspaces. AI processes
               timelines without storage misuse. Built so security never blocks speed.
@@ -554,13 +588,13 @@ export default function Landing() {
         {/* giant wordmark */}
         <div
           aria-hidden
-          className="relative mt-12 select-none"
+          className="relative mt-10 mb- select-none overflow-hidden"
         >
           <div
-            className="whitespace-nowrap text-center font-semibold leading-[0.78] text-[var(--color-foreground)]"
+            className="whitespace-nowrap text-center font-black leading-[0.8] text-[var(--color-foreground)]/50"
             style={{
-              fontSize: 'clamp(4.5rem, 18vw, 20rem)',
-              letterSpacing: '-0.06em',
+              fontSize: 'clamp(4rem, 18vw, 20rem)',
+              letterSpacing: '-0.05em',
               transform: 'translateY(10%)',
             }}
           >
