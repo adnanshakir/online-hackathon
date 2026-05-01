@@ -455,3 +455,12 @@ export const resendVerificationEmail = async (req, res, next) => {
   }
 };
 
+export const getMe = async (req, res, next) => {
+  try {
+    return res.status(200).json({
+      user: req.user,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

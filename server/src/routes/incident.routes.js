@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import validate from '../middlewares/validate.middleware.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
-import { requireWorkspace } from '../middlewares/workspace.middleware.js';
-import { authenticate, requireVerification } from '../middlewares/auth.middleware.js';
+import {
+  authenticate,
+  requireVerification,
+  requireWorkspace,
+} from '../middlewares/auth.middleware.js';
 import {
   assignUsersSchema,
   createIncidentSchema,
@@ -16,7 +18,6 @@ import {
   updateIncidentStatus,
 } from '../controllers/incident.controller.js';
 import updateRoutes from './update.routes.js';
-
 import { apiLimiter } from '../middlewares/rateLimit.middleware.js';
 
 const router = Router();
@@ -25,17 +26,16 @@ router.use(authenticate);
 router.use(requireWorkspace);
 router.use(apiLimiter);
 
+/** @route POST /api/incidents
+ * @desc Create a new incident
+ * @access Private
+ */
 router.post(
   '/',
   requireVerification,
   validate(createIncidentSchema),
   createIncident
 );
-/** @route POST /api/incidents
- * @desc Create a new incident
- * @access Private
- */
-router.post('/', validate(createIncidentSchema), createIncident);
 
 /** @route GET /api/incidents
  * @desc Get all incidents
@@ -48,12 +48,22 @@ router.get('/', getIncidents);
  * @access Private
  */
 router.get('/:id', getIncidentById);
+
+/** @route PATCH /api/incidents/:id/status
+ * @desc Update incident status
+ * @access Private
+ */
 router.patch(
   '/:id/status',
   requireVerification,
   validate(updateStatusSchema),
   updateIncidentStatus
 );
+
+/** @route PATCH /api/incidents/:id/assign
+ * @desc Assign users to incident
+ * @access Private
+ */
 router.patch(
   '/:id/assign',
   requireVerification,

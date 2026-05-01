@@ -9,6 +9,7 @@ import {
   resetPassword,
   verifyEmail,
   resendVerificationEmail,
+  getMe
 } from '../controllers/auth.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import {
@@ -41,6 +42,13 @@ router.post('/register', authLimiter, validate(registerSchema), register);
     @access  Public
 */
 router.post('/login', authLimiter, validate(loginSchema), login);
+
+/*
+    @route   GET /api/auth/me
+    @desc    Get current logged-in user
+    @access  Private
+*/
+router.get('/me', authenticate, getMe);
 
 /*
     @route   POST /api/auth/refresh-token

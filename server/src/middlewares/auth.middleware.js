@@ -57,4 +57,16 @@ export const requireVerification = (req, res, next) => {
   next();
 };
 
+export const requireWorkspace = (req, res, next) => {
+  if (!req.user.workspace) {
+    return next(
+      new AppError(
+        'You must create or join a workspace to access this feature.',
+        403
+      )
+    );
+  }
+  next();
+};
+
 export default authenticate;
