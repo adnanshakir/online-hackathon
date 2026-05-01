@@ -1,17 +1,36 @@
 import { Incident } from '../models/incident.model.js';
 import { Update } from '../models/update.model.js';
 import { User } from '../models/user.model.js';
+import { Service } from '../models/service.model.js';
 import AppError from '../utils/appError.js';
 
 export const createIncident = async (req, res, next) => {
   try {
+    const { title, description, severity, service: serviceId } = req.body;
+
+    // Validate service belongs to workspace
+    const service = await Service.findOne({
+      _id: serviceId,
+      workspace: req.user.workspace,
+    });
+
+    if (!service) {
+      throw new AppError('Invalid service selected for this workspace', 400);
+    }
+
     const incident = await Incident.create({
-      ...req.body,
+      title,
+      description,
+      severity,
+      service: serviceId,
       createdBy: req.user._id,
       workspace: req.user.workspace,
     });
 
-    await incident.populate('createdBy', 'name email');
+    await incident.populate([
+  { path: 'createdBy', select: 'name email avatar' },
+  { path: 'service', select: 'name type techStack' },
+]);
     return res.status(201).json(incident);
   } catch (error) {
     return next(error);
@@ -56,6 +75,7 @@ export const getIncidents = async (req, res, next) => {
       Incident.find(query)
         .populate('createdBy', 'name email')
         .populate('assignedTo', 'name email')
+        .populate('service', 'name type techStack')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit)),
@@ -168,6 +188,7 @@ export const assignUsers = async (req, res, next) => {
 
     await incident.populate('createdBy', 'name email');
     await incident.populate('assignedTo', 'name email');
+    await incident.populate('service', 'name type techStack');
 
     return res.status(200).json(incident);
   } catch (error) {
@@ -182,7 +203,8 @@ export const getIncidentById = async (req, res, next) => {
       workspace: req.user.workspace,
     })
       .populate('createdBy', 'name email')
-      .populate('assignedTo', 'name email');
+      .populate('assignedTo', 'name email')
+      .populate('service', 'name type techStack');
 
     if (!incident) {
       throw new AppError('Incident not found', 404);

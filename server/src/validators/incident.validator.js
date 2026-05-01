@@ -14,7 +14,9 @@ export const createIncidentSchema = z.object({
     .trim()
     .min(10, { message: 'Description must be at least 10 characters' }),
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
-  service: z.string().trim().min(2, { message: 'Service must be valid' }),
+  service: z.string({
+    required_error: 'Service ID is required',
+  }).length(24, 'Invalid Service ID format'),
 });
 
 export const updateStatusSchema = z.object({

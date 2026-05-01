@@ -8,7 +8,7 @@ export const getIncidentSummary = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const incident = await Incident.findById(id);
+    const incident = await Incident.findById(id).populate('service');
     if (!incident) {
       throw new AppError('Incident not found', 404);
     }
@@ -17,14 +17,7 @@ export const getIncidentSummary = async (req, res, next) => {
       createdAt: 1,
     });
 
-    if (!updates.length) {
-      return res.status(200).json({
-        success: true,
-        summary: 'No updates available for this incident yet.',
-      });
-    }
-
-    const recentUpdates = updates.slice(-5);
+    const recentUpdates = updates.length > 0 ? updates.slice(-5) : [];
 
     const prompt = `
 You are an incident management AI.
@@ -36,10 +29,15 @@ Rules:
 - No greetings or apologies
 - Focus on issue, impact, and resolution
 - Professional tone
+- **Plain text ONLY (NO Markdown, no **, no #)**
+- **Single paragraph only (no newlines)**
 
 Title: ${incident.title}
 Description: ${incident.description}
-Service: ${incident.service}
+Service:
+  Name: ${incident.service?.name}
+  Type: ${incident.service?.type}
+  Tech Stack: ${incident.service?.techStack?.join(', ')}
 Severity: ${incident.severity}
 Status: ${incident.status}
 
@@ -63,48 +61,59 @@ export const getIncidentRootCause = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const incident = await Incident.findById(id);
+    const incident = await Incident.findById(id).populate('service');
     if (!incident) {
       throw new AppError('Incident not found', 404);
     }
 
     const updates = await Update.find({ incident: id });
 
-    if (!updates.length) {
-      return res.status(200).json({
-        success: true,
-        rootCause: 'Not enough data to determine root cause.',
-      });
-    }
-
-    const recentUpdates = updates.slice(-5);
+    const recentUpdates = updates.length > 0 ? updates.slice(-5) : [];
 
     const prompt = `
 You are an incident analysis AI.
 
-Analyze the following incident updates and determine the most likely root cause.
+Given the service context, incident details, and timeline, determine the most likely root cause.
 
 Rules:
-- Be concise (1–2 sentences)
-- Do NOT repeat updates
-- Do NOT guess wildly
-- Use "likely" if uncertain
-- Focus on technical cause, not symptoms
+- Provide 1–3 possible causes ranked by likelihood.
+- Return ONLY a valid JSON array of strings.
+- Example output: ["Possible memory leak in Node.js process", "Database connection pool exhaustion"]
+- Be concise.
+- Focus on technical cause based on the tech stack.
+
+Service:
+  Name: ${incident.service?.name}
+  Type: ${incident.service?.type}
+  Tech Stack: ${incident.service?.techStack?.join(', ')}
 
 Incident:
 Title: ${incident.title}
 Description: ${incident.description}
-Service: ${incident.service}
 
 Updates:
-${recentUpdates.map((u) => '- ' + u.message).join('\n')}
+${recentUpdates.length > 0 ? recentUpdates.map((u) => '- ' + u.message).join('\n') : 'No updates yet.'}
 `;
 
-    const rootCause = await generateAIResponse(prompt);
+    const aiResponse = await generateAIResponse(prompt);
+    
+    let analysis;
+    try {
+      // Clean the response in case AI adds markdown blocks
+      const cleanJson = aiResponse.replace(/```json|```/g, '').trim();
+      analysis = JSON.parse(cleanJson);
+      
+      if (!Array.isArray(analysis)) {
+        analysis = [aiResponse]; // Fallback if it's not an array
+      }
+    } catch (e) {
+      // Fallback if parsing fails
+      analysis = [aiResponse];
+    }
 
     return res.status(200).json({
       success: true,
-      rootCause,
+      analysis,
     });
   } catch (error) {
     return next(error);

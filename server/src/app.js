@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import incidentRoutes from './routes/incident.routes.js';
 import workspaceRoutes from './routes/workspace.routes.js';
+import serviceRoutes from './routes/service.routes.js';
 import statusRoutes from './routes/status.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import errorHandler from './middlewares/error.middleware.js';
@@ -86,6 +87,7 @@ app.use(passport.initialize());
 app.use('/api/auth', authRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/workspace', workspaceRoutes);
+app.use('/api/services', serviceRoutes);
 app.use('/api/status', statusRoutes);
 app.use('/api/ai', aiRoutes);
 

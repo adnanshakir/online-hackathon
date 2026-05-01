@@ -9,6 +9,10 @@ export const createWorkspace = async (req, res, next) => {
   try {
     const { name, slug } = req.body;
 
+    if (req.user.workspace) {
+      throw new AppError('You already belong to a workspace', 400);
+    }
+
     const existing = await Workspace.findOne({ slug });
     if (existing) throw new AppError('Workspace slug already exists', 400);
 
@@ -33,6 +37,10 @@ export const createWorkspace = async (req, res, next) => {
 export const joinWorkspace = async (req, res, next) => {
   try {
     const { inviteCode } = req.body;
+
+    if (req.user.workspace) {
+      throw new AppError('You are already a member of a workspace', 400);
+    }
 
     const workspace = await Workspace.findOne({ inviteCode });
     if (!workspace) throw new AppError('Invalid invite code', 400);
