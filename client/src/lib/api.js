@@ -23,6 +23,7 @@ import { useAuthStore } from '@/store/authStore';
 import { USERS, getUserById } from '@/data/users';
 import { SERVICES, getServiceById } from '@/data/services';
 import { getPostmortem } from '@/data/postmortems';
+import { isDemoMode, disableDemoMode, DEMO_USER } from '@/lib/demo';
 
 /* ────────── Axios client ────────── */
 
@@ -121,6 +122,12 @@ function toUser(raw) {
 /* ────────── Incidents ────────── */
 
 export async function listIncidents({ filter = 'all' } = {}) {
+  if (isDemoMode()) {
+    const incidents = useIncidentsStore.getState().incidents;
+    if (filter === 'active') return incidents.filter((i) => i.status !== 'resolved');
+    if (filter === 'resolved') return incidents.filter((i) => i.status === 'resolved');
+    return incidents;
+  }
   const { data } = await http.get('/incidents');
   const incidents = data.map(toIncident);
   if (filter === 'active') return incidents.filter((i) => i.status !== 'resolved');
@@ -129,11 +136,24 @@ export async function listIncidents({ filter = 'all' } = {}) {
 }
 
 export async function getIncident(id) {
+  if (isDemoMode()) {
+    return useIncidentsStore.getState().incidents.find((i) => i.id === id) || null;
+  }
   const { data } = await http.get(`/incidents/${id}`);
   return toIncident(data);
 }
 
 export async function createIncident(payload) {
+  if (isDemoMode()) {
+    return useIncidentsStore.getState().createIncident({
+      title: payload.title,
+      description: payload.description,
+      severity: payload.severity || 'low',
+      serviceIds: payload.serviceIds || [],
+      assigneeIds: payload.assigneeIds || [],
+      createdById: useAuthStore.getState().user?.id || DEMO_USER.id,
+    });
+  }
   // Backend wants { title, description, service: <single string>, severity }.
   // Frontend's NewIncidentDialog sends serviceIds (array) + assigneeIds.
   // We send only the first service today; if assignees were provided we follow
@@ -159,11 +179,19 @@ export async function createIncident(payload) {
 }
 
 export async function changeStatus(incidentId, status) {
+  if (isDemoMode()) {
+    return useIncidentsStore.getState().changeStatus(incidentId, status);
+  }
   const { data } = await http.patch(`/incidents/${incidentId}/status`, { status });
   return toIncident(data);
 }
 
 export async function assignUsers(incidentId, assignedTo) {
+  if (isDemoMode()) {
+    return useIncidentsStore.getState().updateIncident(incidentId, {
+      assigneeIds: assignedTo,
+    });
+  }
   const { data } = await http.patch(`/incidents/${incidentId}/assign`, {
     assignedTo,
   });
@@ -181,11 +209,24 @@ export async function updateIncident(incidentId, patch) {
 /* ────────── Timeline ────────── */
 
 export async function getTimeline(incidentId) {
+  if (isDemoMode()) {
+    const incident = useIncidentsStore
+      .getState()
+      .incidents.find((i) => i.id === incidentId);
+    return incident?.updates ? [...incident.updates] : [];
+  }
   const { data } = await http.get(`/incidents/${incidentId}/updates`);
   return data.map(toUpdate);
 }
 
 export async function postUpdate(incidentId, update) {
+  if (isDemoMode()) {
+    return useIncidentsStore.getState().postUpdate(incidentId, {
+      authorId: update.authorId || useAuthStore.getState().user?.id || DEMO_USER.id,
+      message: update.message,
+      statusChange: update.statusChange || null,
+    });
+  }
   const body = {
     message: update.message,
     // Frontend uses statusChange for the "post + change status" combo flow.
@@ -248,6 +289,10 @@ export async function getIncidentPostmortem(incidentId) {
  * Side-effect: writes user into authStore so the rest of the app can read it.
  */
 export async function login({ email, password }) {
+  if (isDemoMode()) {
+    useAuthStore.getState().setUser(DEMO_USER);
+    return DEMO_USER;
+  }
   const { data } = await http.post('/auth/login', { email, password });
   const user = toUser(data.user);
   useAuthStore.getState().setUser(user);
@@ -259,6 +304,11 @@ export async function login({ email, password }) {
  * 201 → cookies set + user returned. 409 if email taken.
  */
 export async function register({ name, email, password }) {
+  if (isDemoMode()) {
+    const user = { ...DEMO_USER, name: name || DEMO_USER.name, email: email || DEMO_USER.email };
+    useAuthStore.getState().setUser(user);
+    return user;
+  }
   const { data } = await http.post('/auth/register', { name, email, password });
   const user = toUser(data.user);
   useAuthStore.getState().setUser(user);
@@ -270,6 +320,11 @@ export async function register({ name, email, password }) {
  * Clears cookies + DB refresh token. Frontend also clears the local store.
  */
 export async function logout() {
+  if (isDemoMode()) {
+    disableDemoMode();
+    useAuthStore.getState().clear();
+    return;
+  }
   try {
     await http.post('/auth/logout');
   } catch {
@@ -283,6 +338,7 @@ export async function logout() {
  * Used by the response interceptor; rarely called directly.
  */
 export async function refreshToken() {
+  if (isDemoMode()) return { ok: true };
   await http.post('/auth/refresh-token');
   return { ok: true };
 }
@@ -295,6 +351,10 @@ export async function refreshToken() {
  * truth on every page load.
  */
 export async function me() {
+  if (isDemoMode()) {
+    useAuthStore.getState().setUser(DEMO_USER);
+    return DEMO_USER;
+  }
   try {
     const { data } = await http.get('/auth/me');
     const user = toUser(data.user || data);

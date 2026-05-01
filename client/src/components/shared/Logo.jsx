@@ -1,8 +1,12 @@
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { APP_NAME } from '@/lib/constants';
 
 /**
  * OpsWatch wordmark.
+ *
+ * Always renders as a Link to "/", so clicking the logo from anywhere in the
+ * app returns the user to the marketing landing page.
  *
  * Mark: a thick ring with a filled center dot — reads as a watch face,
  * a radar/scope, and a target. Sits cleanly without a tile background.
@@ -10,7 +14,14 @@ import { APP_NAME } from '@/lib/constants';
 export function Logo({ className, showWordmark = true, size = 'md' }) {
   const dim = size === 'sm' ? 'h-5 w-5' : size === 'lg' ? 'h-7 w-7' : 'h-6 w-6';
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <Link
+      to="/"
+      aria-label={`${APP_NAME} — go to homepage`}
+      className={cn(
+        'inline-flex items-center gap-2 transition-opacity hover:opacity-80',
+        className
+      )}
+    >
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -25,6 +36,6 @@ export function Logo({ className, showWordmark = true, size = 'md' }) {
           {APP_NAME}
         </span>
       )}
-    </div>
+    </Link>
   );
 }

@@ -27,6 +27,9 @@ import { fadeUp, stagger } from '@/components/motion/variants';
 import { APP_NAME } from '@/lib/constants';
 import { useThemeStore } from '@/store/themeStore';
 import InteractiveGrid from '@/components/ui/InteractiveGrid';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { enableDemoMode } from '@/lib/demo';
 
 const FAQ_DATA = [
   {
@@ -95,6 +98,13 @@ export default function Landing() {
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const [openFaq, setOpenFaq] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const startDemo = () => {
+    enableDemoMode();
+    toast.success('Demo session started — explore freely.');
+    navigate('/app/dashboard');
+  };
 
   useEffect(() => {
     const lenis = new Lenis({
@@ -240,10 +250,13 @@ export default function Landing() {
                   Start managing free <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="xl" className="rounded-full px-5 text-[var(--color-muted-strong)]">
-                <Link to="/login">
-                  See live demo <ArrowRight className="h-4 w-4" />
-                </Link>
+              <Button
+                variant="ghost"
+                size="xl"
+                onClick={startDemo}
+                className="rounded-full px-5 text-[var(--color-muted-strong)]"
+              >
+                See live demo <ArrowRight className="h-4 w-4" />
               </Button>
             </motion.div>
 
@@ -758,14 +771,20 @@ function ScrollRevealWord({ word, scrollYProgress, start, end, highlight = false
   );
 }
 
-const REVEAL_SEGMENTS = [
-  { text: 'Incidents are', highlight: false },
-  { text: 'chaotic.', highlight: true },
-  { text: "Your tools shouldn't be.", highlight: false },
-  { text: 'We bring the entire response into', highlight: false },
-  { text: 'one structured workflow', highlight: true },
-  { text: '— so your team can', highlight: false },
-  { text: 'act, not scramble.', highlight: true },
+const REVEAL_LINES = [
+  [
+    { text: 'Incidents are', highlight: false },
+    { text: 'chaotic.', highlight: true },
+    { text: "Your tools shouldn't be.", highlight: false },
+  ],
+  [
+    { text: 'We bring the entire response into', highlight: false },
+    { text: 'one structured workflow,', highlight: true },
+  ],
+  [
+    { text: 'so your team can', highlight: false },
+    { text: 'act, not scramble.', highlight: true },
+  ],
 ];
 
 function ScrollRevealParagraph() {
@@ -775,29 +794,36 @@ function ScrollRevealParagraph() {
     offset: ['start 0.9', 'start 0.25'],
   });
 
-  const words = REVEAL_SEGMENTS.flatMap((seg) =>
-    seg.text.split(' ').map((word) => ({ word, highlight: seg.highlight }))
+  const lines = REVEAL_LINES.map((segs) =>
+    segs.flatMap((seg) => seg.text.split(' ').map((word) => ({ word, highlight: seg.highlight })))
   );
+  const totalWords = lines.reduce((acc, l) => acc + l.length, 0);
 
+  let cursor = 0;
   return (
     <p
       ref={ref}
-      className="text-[28px] font-semibold leading-[1.2] tracking-[-0.03em] sm:text-[36px] md:text-[44px] lg:text-[52px]"
+      className="text-[26px] font-semibold leading-[1.25] tracking-[-0.03em] sm:text-[34px] md:text-[42px] lg:text-[50px]"
     >
-      {words.map((w, i) => {
-        const start = (i / words.length) * 0.85;
-        const end = ((i + 1) / words.length) * 0.85;
-        return (
-          <ScrollRevealWord
-            key={`${w.word}-${i}`}
-            word={w.word}
-            scrollYProgress={scrollYProgress}
-            start={start}
-            end={end}
-            highlight={w.highlight}
-          />
-        );
-      })}
+      {lines.map((line, li) => (
+        <span key={li} className="block">
+          {line.map((w, i) => {
+            const wordIdx = cursor++;
+            const start = (wordIdx / totalWords) * 0.85;
+            const end = ((wordIdx + 1) / totalWords) * 0.85;
+            return (
+              <ScrollRevealWord
+                key={`${li}-${i}-${w.word}`}
+                word={w.word}
+                scrollYProgress={scrollYProgress}
+                start={start}
+                end={end}
+                highlight={w.highlight}
+              />
+            );
+          })}
+        </span>
+      ))}
     </p>
   );
 }

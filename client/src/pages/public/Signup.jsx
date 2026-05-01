@@ -55,9 +55,8 @@ export default function Signup() {
         animate="visible"
         className="flex flex-col px-6 py-10 md:px-12"
       >
-        <Link to="/" className="inline-flex">
-          <Logo />
-        </Link>
+        <Logo />
+
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
           <h1 className="text-3xl font-semibold tracking-tight">Create your workspace</h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
