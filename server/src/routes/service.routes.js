@@ -3,6 +3,7 @@ import {
   createService,
   getServices,
   getServiceById,
+  updateServiceStatus,
 } from '../controllers/service.controller.js';
 import {
   authenticate,
@@ -44,5 +45,13 @@ router.post(
   validate(createServiceSchema),
   createService
 );
+
+/**
+ * FIX (2026-05-02)
+ * @route   PATCH /api/services/:id/status
+ * @desc    Update a service's health status (operational/degraded/down/maintenance)
+ * @access  Private (workspace member)
+ */
+router.patch('/:id/status', updateServiceStatus);
 
 export default router;

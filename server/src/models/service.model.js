@@ -41,6 +41,15 @@ const serviceSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    // FIX (2026-05-02): Health status surfaced on the dashboard + public
+    // status page. Manually toggled by admins from the Services page.
+    // Default "operational" so freshly-created services don't ping red.
+    status: {
+      type: String,
+      enum: ['operational', 'degraded', 'down', 'maintenance'],
+      default: 'operational',
+      index: true,
+    },
     workspace: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Workspace',
