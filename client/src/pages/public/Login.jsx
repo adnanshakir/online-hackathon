@@ -35,9 +35,9 @@ export default function Login() {
     }
     setSubmitting(true);
     try {
-      await api.login({ email, password });
+      const user = await api.login({ email, password });
       toast.success('Signed in');
-      navigate('/app/dashboard');
+      navigate(user?.workspace ? '/app/dashboard' : '/workspace-decision');
     } catch (err) {
       const msg =
         err.response?.data?.message ||

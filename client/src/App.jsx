@@ -14,18 +14,23 @@ import Settings from '@/pages/app/Settings';
 import IncidentDetail from '@/pages/incident/IncidentDetail';
 import Postmortem from '@/pages/incident/Postmortem';
 import ServiceSetup from '@/pages/auth/ServiceSetup';
+import VerifyEmail from '@/pages/public/VerifyEmail';
+import Services from '@/pages/app/Services';
 
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { auth } from '@/lib/api';
+import { isDemoMode } from '@/lib/demo';
 
 function PublicRoute({ children }) {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isInitialCheckDone = useAuthStore((s) => s.isInitialCheckDone);
 
-  if (isAuthenticated) {
-    // If logged in but no workspace, go to decision screen
+  // Demo sessions stay "authenticated" but should still be free to roam the
+  // public site — otherwise the logo and any /login link trap them in /app.
+  if (isAuthenticated && !isDemoMode()) {
+    // Logged in but no workspace → workspace decision screen
     if (!user?.workspace) return <Navigate to="/workspace-decision" replace />;
     return <Navigate to="/app/dashboard" replace />;
   }
@@ -59,21 +64,28 @@ function WorkspaceDecisionRoute({ children }) {
 export default function App() {
   const setUser = useAuthStore((s) => s.setUser);
   const setInitialCheckDone = useAuthStore((s) => s.setInitialCheckDone);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
+  // Initial session bootstrap — runs once on mount to reconcile cookie state
+  // with localStorage. In demo mode auth.me() returns DEMO_USER synchronously
+  // without hitting the backend, so this is fast and offline-safe.
   useEffect(() => {
-    // Check session on mount to sync with backend cookies
     auth
       .me()
       .then((user) => setUser(user))
       .finally(() => setInitialCheckDone(true));
+  }, [setUser, setInitialCheckDone]);
 
-    // Session heartbeat: periodically verify session is still valid
+  // Session heartbeat — only ping the backend while we believe we're logged in
+  // and not in demo mode. 60s cadence is enough to catch refresh-token expiry
+  // without hammering the server.
+  useEffect(() => {
+    if (!isAuthenticated || isDemoMode()) return;
     const interval = setInterval(() => {
       auth.me();
-    }, 10000);
-
+    }, 60_000);
     return () => clearInterval(interval);
-  }, [setUser, setInitialCheckDone]);
+  }, [isAuthenticated]);
 
   return (
     <>
@@ -104,6 +116,10 @@ export default function App() {
           }
         />
         <Route path="/status/:teamSlug" element={<PublicStatus />} />
+        {/* Email verification target — links from the verification email
+            land here. Always reachable (no auth gate) so anonymous clicks
+            still work, e.g. when the user is signed out on this device. */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         {/* Workspace Decision & Service Setup */}
         <Route
@@ -136,6 +152,7 @@ export default function App() {
           <Route path="incidents" element={<IncidentsList />} />
           <Route path="incidents/:id" element={<IncidentDetail />} />
           <Route path="incidents/:id/postmortem" element={<Postmortem />} />
+          <Route path="services" element={<Services />} />
           <Route path="team" element={<Team />} />
           <Route path="status" element={<StatusPageSettings />} />
           <Route path="settings" element={<Settings />} />

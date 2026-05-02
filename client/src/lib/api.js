@@ -120,6 +120,10 @@ function toUpdate(raw) {
 
 function toUser(raw) {
   if (!raw) return null;
+  // workspace can come back as an ObjectId string, a populated object, or null.
+  // We surface the id at `user.workspace` (the canonical gate field used
+  // across the app) and the populated object at `user.originalWorkspace`
+  // when the backend bothered to populate it.
   return {
     id: raw._id || raw.id,
     name: raw.name,
@@ -127,8 +131,10 @@ function toUser(raw) {
     role: raw.role,
     avatar: raw.avatar,
     authProviders: raw.authProviders,
-    workspace: raw.workspace?._id || raw.workspace,
-    originalWorkspace: typeof raw.workspace === 'object' ? raw.workspace : null,
+    isVerified: raw.isVerified,
+    workspace: raw.workspace?._id || raw.workspace || null,
+    originalWorkspace:
+      raw.workspace && typeof raw.workspace === 'object' ? raw.workspace : null,
   };
 }
 
@@ -209,6 +215,16 @@ export async function changeStatus(incidentId, status) {
   return toIncident(data);
 }
 
+/**
+ * Mock-only general PATCH for incident fields (title, description). Backend
+ * exposes only /status and /assign — anything else lives in the local
+ * incidentsStore until the API gets a real PATCH /:id endpoint. Restored
+ * here because IncidentDetail's inline title-edit calls api.updateIncident.
+ */
+export async function updateIncident(incidentId, patch) {
+  return useIncidentsStore.getState().updateIncident(incidentId, patch);
+}
+
 export async function assignUsers(incidentId, assignedTo) {
   if (isDemoMode()) {
     return useIncidentsStore.getState().updateIncident(incidentId, {
@@ -236,6 +252,15 @@ export async function getService(id) {
     return getServiceById(id);
   }
   const { data } = await http.get(`/services/${id}`);
+  return data;
+}
+
+/**
+ * @backend  PATCH /api/services/:id/status  { status }
+ * Toggles service health: operational | degraded | down | maintenance.
+ */
+export async function updateServiceStatus(serviceId, status) {
+  const { data } = await http.patch(`/services/${serviceId}/status`, { status });
   return data;
 }
 
@@ -298,6 +323,101 @@ export async function listUsers() {
 
 export async function getUser(id) {
   return getUserById(id) || null;
+}
+
+/* ────────── Workspace ────────── */
+
+/**
+ * @backend  POST /api/workspace/create  { name, slug }
+ * Requires verified email. Backend mutates the current user (sets workspace +
+ * role: 'owner') but does NOT return the updated user, so we re-fetch /me to
+ * keep authStore in sync.
+ */
+export async function createWorkspace({ name, slug }) {
+  if (isDemoMode()) {
+    const fakeWorkspace = {
+      _id: 'ws_demo',
+      name: name || 'Demo Workspace',
+      slug: slug || 'demo',
+      inviteCode: 'DEMO01',
+    };
+    useAuthStore.getState().setUser({
+      ...useAuthStore.getState().user,
+      workspace: fakeWorkspace._id,
+      originalWorkspace: fakeWorkspace,
+      role: 'owner',
+    });
+    return fakeWorkspace;
+  }
+  const { data } = await http.post('/workspace/create', { name, slug });
+  await me();
+  return data;
+}
+
+/**
+ * @backend  POST /api/workspace/join  { inviteCode }
+ * Requires verified email. Backend joins user as 'member' but does not return
+ * the updated user — we re-fetch /me afterwards.
+ */
+export async function joinWorkspace({ inviteCode }) {
+  if (isDemoMode()) {
+    useAuthStore.getState().setUser({
+      ...useAuthStore.getState().user,
+      workspace: 'ws_demo',
+      role: 'member',
+    });
+    return { message: 'Joined demo workspace' };
+  }
+  const { data } = await http.post('/workspace/join', { inviteCode });
+  await me();
+  return data;
+}
+
+// Namespace re-exports — Adnan's pages import { workspace, services } from
+// '@/lib/api', so we expose the matching named groups here.
+export const workspace = {
+  create: createWorkspace,
+  join: joinWorkspace,
+};
+export const services = {
+  list: listServices,
+  get: getService,
+  create: createService,
+};
+
+/* ────────── AI ──────────
+ * Backend has Mistral → Gemini failover. The summary endpoint returns a
+ * plain-text string; the root-cause endpoint returns a JSON array of 1–3
+ * ranked technical causes (each with title + reasoning + confidence).
+ */
+
+/** @backend GET /api/ai/incidents/:id/summary  → { summary: string } */
+export async function getAISummary(incidentId) {
+  const { data } = await http.get(`/ai/incidents/${incidentId}/summary`);
+  return data;
+}
+
+/** @backend GET /api/ai/incidents/:id/root-cause  → { causes: [...] } */
+export async function getAIRootCause(incidentId) {
+  const { data } = await http.get(`/ai/incidents/${incidentId}/root-cause`);
+  return data;
+}
+
+/* ────────── Public Status ──────────
+ * Unauthenticated endpoint serving the public-facing status page (services
+ * health + active incidents + uptime history).
+ */
+
+/** @backend GET /api/status  → { services, activeIncidents, ... } */
+export async function getPublicStatus() {
+  const { data } = await http.get('/status');
+  return data;
+}
+
+/** @backend GET /api/status/history  → uptime history rows */
+export async function getStatusHistory() {
+  const { data } = await http.get('/status/history');
+  return data;
 }
 
 /* ────────── Postmortems (still mock — no Postmortem model yet) ────────── */
@@ -400,40 +520,46 @@ export async function me() {
   }
 }
 
-/* ────────── Workspaces ────────── */
-
-export async function createWorkspace({ name, slug }) {
-  const { data } = await http.post('/workspace/create', { name, slug });
-  // After creating, refresh user session to get the workspace ID
-  await me();
-  return data;
-}
-
-export async function joinWorkspace({ inviteCode }) {
-  const { data } = await http.post('/workspace/join', { inviteCode });
-  // After joining, refresh user session to get the workspace ID
-  await me();
-  return data;
-}
-
-export const workspace = {
-  create: createWorkspace,
-  join: joinWorkspace,
-};
-
-/* ────────── Services ────────── */
-
-export const services = {
-  create: createService,
-  list: listServices,
-};
-
 /**
  * URL the "Continue with Google" button should redirect to. Backend handles
  * the OAuth dance and bounces back to FRONTEND_URL with cookies set.
  */
 export function googleAuthUrl() {
   return '/api/auth/google';
+}
+
+/**
+ * @backend  POST /api/auth/resend-verification  { email }
+ * Sends a fresh verification email. Has a 60s server-side cooldown.
+ */
+export async function resendVerification(email) {
+  if (isDemoMode()) {
+    return { message: 'Demo session — no email sent.' };
+  }
+  const { data } = await http.post('/auth/resend-verification', { email });
+  return data;
+}
+
+/**
+ * @backend  POST /api/auth/verify-email  { token }
+ * Marks the user's email verified. Returns 400 on expired/invalid tokens.
+ * Used by the /verify-email page that the email link points to.
+ */
+export async function verifyEmail(token) {
+  if (isDemoMode()) {
+    return { message: 'Demo session — already verified.' };
+  }
+  const { data } = await http.post('/auth/verify-email', { token });
+  // If the user is currently signed in, refresh their record so isVerified
+  // flips in authStore without needing a manual reload.
+  try {
+    await me();
+  } catch {
+    // Anonymous click (most common case — user clicks email on a different
+    // device or while logged out). That's fine; the next login picks up the
+    // verified state from the backend.
+  }
+  return data;
 }
 
 export const auth = {

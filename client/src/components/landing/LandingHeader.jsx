@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react'; // eslint-disable-line no-unused-vars
-import { Sun, Moon, Menu, X } from 'lucide-react';
+import { Sun, Moon, Menu, X, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/Logo';
+import { UserMenu } from '@/components/shared/UserMenu';
 import { useThemeStore } from '@/store/themeStore';
+import { useAuthStore } from '@/store/authStore';
 
 export function LandingHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <>
@@ -66,22 +69,40 @@ export function LandingHeader() {
               <Moon className="h-4 w-4" />
             )}
           </button>
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="hidden text-[var(--color-muted-strong)] sm:inline-flex"
-          >
-            <Link to="/login">Sign in</Link>
-          </Button>
-          <Button
-            asChild
-            variant="gradient"
-            size="sm"
-            className="rounded-full px-4 hidden xs:inline-flex"
-          >
-            <Link to="/signup">Get Started</Link>
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <Button
+                asChild
+                variant="gradient"
+                size="sm"
+                className="rounded-full px-4 hidden xs:inline-flex"
+              >
+                <Link to="/app/dashboard">
+                  Open app <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <UserMenu variant="landing" />
+            </>
+          ) : (
+            <>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden text-[var(--color-muted-strong)] sm:inline-flex"
+              >
+                <Link to="/login">Sign in</Link>
+              </Button>
+              <Button
+                asChild
+                variant="gradient"
+                size="sm"
+                className="rounded-full px-4 hidden xs:inline-flex"
+              >
+                <Link to="/signup">Get Started</Link>
+              </Button>
+            </>
+          )}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(true)}
@@ -149,20 +170,33 @@ export function LandingHeader() {
                 </Link>
               </nav>
               <div className="mt-auto pt-6 border-t border-[var(--color-border)] flex flex-col gap-3">
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="justify-center w-full"
-                >
-                  <Link to="/login">Sign in</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="gradient"
-                  className="justify-center w-full rounded-full"
-                >
-                  <Link to="/signup">Get Started</Link>
-                </Button>
+                {isAuthenticated ? (
+                  <Button
+                    asChild
+                    variant="gradient"
+                    className="justify-center w-full rounded-full"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Link to="/app/dashboard">Open app</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      asChild
+                      variant="ghost"
+                      className="justify-center w-full"
+                    >
+                      <Link to="/login">Sign in</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="gradient"
+                      className="justify-center w-full rounded-full"
+                    >
+                      <Link to="/signup">Get Started</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </motion.div>
           </div>

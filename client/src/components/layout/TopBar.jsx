@@ -1,5 +1,6 @@
 import { Search, Bell, Sun, Moon, Plus, Command as CommandIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserMenu } from '@/components/shared/UserMenu';
 import { useThemeStore } from '@/store/themeStore';
 import { useUIStore } from '@/store/uiStore';
 import { cn } from '@/lib/utils';
@@ -66,12 +67,8 @@ export function TopBar() {
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
 
-        <div
-          className="ml-2 grid size-8 cursor-pointer place-items-center rounded-full bg-gradient-accent text-xs font-semibold text-white"
-          aria-label="User menu"
-          title="Demo user"
-        >
-          DU
+        <div className="ml-2">
+          <UserMenu variant="app" />
         </div>
       </div>
     </header>
