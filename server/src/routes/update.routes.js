@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import {
-  authenticate,
-  requireWorkspace,
-} from '../middlewares/auth.middleware.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
+import { requireWorkspace } from '../middlewares/workspace.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
 import { addUpdateSchema } from '../validators/update.validator.js';
-import { addUpdate, getUpdates } from '../controllers/update.controller.js';
+import {
+  addUpdate,
+  getUpdates,
+  deleteUpdate,
+} from '../controllers/update.controller.js';
 
 const router = Router({ mergeParams: true });
 
@@ -29,5 +31,12 @@ router.post(
     @access  Private
 */
 router.get('/', getUpdates);
+
+/*
+    @route   DELETE /api/incidents/:id/updates/:updateId
+    @desc    Delete a specific update (owner/admin or author)
+    @access  Private
+*/
+router.delete('/:updateId', deleteUpdate);
 
 export default router;

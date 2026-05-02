@@ -29,3 +29,5 @@ export const assignUsersSchema = z.object({
   // Accept only valid user ObjectIds when provided.
   assignedTo: z.array(objectIdSchema).min(1).optional(),
 });
+
+export const updateIncidentSchema = createIncidentSchema.partial();
