@@ -8,16 +8,25 @@ export const getIncidentSummary = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const incident = await Incident.findById(id).populate('service');
+    const incident = await Incident.findOne({
+      _id: id,
+      workspace: req.user.workspace,
+    }).populate(
+      'service',
+      'name type techStack environment description status'
+    );
+
     if (!incident) {
       throw new AppError('Incident not found', 404);
     }
 
-    const updates = await Update.find({ incident: id }).sort({
-      createdAt: 1,
-    });
-
-    const recentUpdates = updates.length > 0 ? updates.slice(-5) : [];
+    const recentUpdates = await Update.find({
+      incident: id,
+      workspace: req.user.workspace,
+    })
+      .sort({ createdAt: -1 })
+      .limit(5);
+    recentUpdates.reverse();
 
     const prompt = `
 You are an incident management AI.
@@ -32,17 +41,22 @@ Rules:
 - **Plain text ONLY (NO Markdown, no **, no #)**
 - **Single paragraph only (no newlines)**
 
-Title: ${incident.title}
-Description: ${incident.description}
 Service:
-  Name: ${incident.service?.name}
-  Type: ${incident.service?.type}
-  Tech Stack: ${incident.service?.techStack?.join(', ')}
-Severity: ${incident.severity}
-Status: ${incident.status}
+  Name: ${incident.service?.name ?? 'Unknown'}
+  Type: ${incident.service?.type ?? 'Unknown'}
+  Tech Stack: ${incident.service?.techStack?.join(', ') || 'Not specified'}
+  Environment: ${incident.service?.environment ?? 'Unknown'}
+  Description: ${incident.service?.description || 'Not provided'}
+  Status: ${incident.service?.status ?? 'Unknown'}
 
-Updates:
-${recentUpdates.map((u) => '- ' + u.message).join('\n')}
+Incident:
+  Title: ${incident.title}
+  Description: ${incident.description}
+  Severity: ${incident.severity}
+  Status: ${incident.status}
+
+Timeline Updates:
+${recentUpdates.length > 0 ? recentUpdates.map((u) => '- ' + u.message).join('\n') : 'No updates yet.'}
 `;
 
     const summary = await generateAIResponse(prompt);
@@ -56,19 +70,30 @@ ${recentUpdates.map((u) => '- ' + u.message).join('\n')}
   }
 };
 
-// 🧠 Generate basic root cause suggestion
+// Generate root cause analysis
 export const getIncidentRootCause = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const incident = await Incident.findById(id).populate('service');
+    const incident = await Incident.findOne({
+      _id: id,
+      workspace: req.user.workspace,
+    }).populate(
+      'service',
+      'name type techStack environment description status'
+    );
+
     if (!incident) {
       throw new AppError('Incident not found', 404);
     }
 
-    const updates = await Update.find({ incident: id });
-
-    const recentUpdates = updates.length > 0 ? updates.slice(-5) : [];
+    const recentUpdates = await Update.find({
+      incident: id,
+      workspace: req.user.workspace,
+    })
+      .sort({ createdAt: -1 })
+      .limit(5);
+    recentUpdates.reverse();
 
     const prompt = `
 You are an incident analysis AI.
@@ -80,18 +105,23 @@ Rules:
 - Return ONLY a valid JSON array of strings.
 - Example output: ["Possible memory leak in Node.js process", "Database connection pool exhaustion"]
 - Be concise.
-- Focus on technical cause based on the tech stack.
+- Focus on technical causes based on the service type, tech stack, and environment.
+- Consider the environment: a ${incident.service?.environment ?? 'production'} environment may have different failure patterns.
 
 Service:
-  Name: ${incident.service?.name}
-  Type: ${incident.service?.type}
-  Tech Stack: ${incident.service?.techStack?.join(', ')}
+  Name: ${incident.service?.name ?? 'Unknown'}
+  Type: ${incident.service?.type ?? 'Unknown'}
+  Tech Stack: ${incident.service?.techStack?.join(', ') || 'Not specified'}
+  Environment: ${incident.service?.environment ?? 'Unknown'}
+  Description: ${incident.service?.description || 'Not provided'}
+  Status: ${incident.service?.status ?? 'Unknown'}
 
 Incident:
-Title: ${incident.title}
-Description: ${incident.description}
+  Title: ${incident.title}
+  Description: ${incident.description}
+  Severity: ${incident.severity}
 
-Updates:
+Timeline Updates:
 ${recentUpdates.length > 0 ? recentUpdates.map((u) => '- ' + u.message).join('\n') : 'No updates yet.'}
 `;
 

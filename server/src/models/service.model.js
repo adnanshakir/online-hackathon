@@ -7,10 +7,25 @@ const serviceSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+    },
     type: {
       type: String,
       required: true,
       enum: ['frontend', 'backend', 'database', 'infra'],
+    },
+    environment: {
+      type: String,
+      required: true,
+      enum: ['production', 'staging', 'development'],
+      default: 'production',
+    },
+    status: {
+      type: String,
+      enum: ['active', 'maintenance', 'deprecated'],
+      default: 'active',
     },
     techStack: [
       {
@@ -18,16 +33,6 @@ const serviceSchema = new mongoose.Schema(
         trim: true,
       },
     ],
-    environment: {
-      type: String,
-      required: true,
-      enum: ['production', 'staging', 'dev'],
-      default: 'production',
-    },
-    description: {
-      type: String,
-      trim: true,
-    },
     repoUrl: {
       type: String,
       trim: true,
