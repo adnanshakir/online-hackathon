@@ -48,9 +48,14 @@ const userSchema = new mongoose.Schema(
       index: true,
     },
 
+    workspace: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Workspace',
+    },
+
     role: {
       type: String,
-      enum: ['admin', 'member'],
+      enum: ['owner', 'admin', 'member'],
       default: 'member',
     },
 
@@ -64,6 +69,36 @@ const userSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    verificationToken: {
+      type: String,
+      select: false,
+    },
+
+    verificationExpires: {
+      type: Date,
+      select: false,
+    },
+
+    lastVerificationSentAt: {
+      type: Date,
+      default: null,
+    },
+
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -72,6 +107,11 @@ const userSchema = new mongoose.Schema(
       transform: function (doc, ret) {
         delete ret.password;
         delete ret.refreshToken;
+        delete ret.resetPasswordToken;
+        delete ret.resetPasswordExpires;
+        delete ret.verificationToken;
+        delete ret.verificationExpires;
+        delete ret.googleId;
         return ret;
       },
     },
@@ -119,5 +159,3 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 export const User = mongoose.model('User', userSchema);
-
-

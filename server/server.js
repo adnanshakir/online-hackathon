@@ -1,6 +1,7 @@
 import app from './src/app.js';
 import connectDB from './src/config/db.js';
 import { config } from './src/config/config.js';
+import { logger } from './src/utils/logger.js';
 
 const PORT = config.PORT || 3000;
 
@@ -9,10 +10,10 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(PORT, () => {
-      console.log(`Server listening on port ${PORT}`);
+      logger.info(`Server listening on port ${PORT}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error.message);
+    logger.error('Failed to start server:', error.message);
     process.exit(1);
   }
 };

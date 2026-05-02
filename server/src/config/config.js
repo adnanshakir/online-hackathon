@@ -12,6 +12,12 @@ const requiredEnv = [
   'GOOGLE_CLIENT_SECRET',
   'GOOGLE_CALLBACK_URL',
   'FRONTEND_URL',
+  'MAIL_CLIENT_ID',
+  'MAIL_CLIENT_SECRET',
+  'MAIL_REFRESH_TOKEN',
+  'MAIL_USER',
+  'GEMINI_API_KEY',
+  'MISTRAL_API_KEY',
 ];
 
 requiredEnv.forEach((key) => {

@@ -23,7 +23,7 @@ export const authenticate = async (req, res, next) => {
       throw new AppError('Invalid access token', 401);
     }
 
-    const user = await User.findById(payload.id);
+    const user = await User.findById(payload.id).populate('workspace');
 
     if (!user) {
       throw new AppError('User no longer exists', 401);
@@ -38,6 +38,35 @@ export const authenticate = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+};
+
+export const requireVerification = (req, res, next) => {
+  if (!req.user) {
+    return next(new AppError('Authentication required', 401));
+  }
+
+  if (!req.user.isVerified) {
+    return next(
+      new AppError(
+        'Email verification required for full access. Please check your inbox.',
+        403
+      )
+    );
+  }
+
+  next();
+};
+
+export const requireWorkspace = (req, res, next) => {
+  if (!req.user.workspace) {
+    return next(
+      new AppError(
+        'You must create or join a workspace to access this feature.',
+        403
+      )
+    );
+  }
+  next();
 };
 
 export default authenticate;
