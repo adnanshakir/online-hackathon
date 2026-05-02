@@ -239,13 +239,18 @@ export const googleCallback = async (req, res, next) => {
     let user = await User.findOne({ email }).populate('workspace');
 
     if (!user) {
-      // Create new OAuth user
+      // Create new OAuth user.
+      // FIX (2026-05-02): Google has already verified ownership of this email
+      // via its OAuth flow, so mark the user verified at creation time.
+      // Without this, Google sign-in users used to land in onboarding stuck
+      // behind requireVerification middleware with no email ever sent.
       user = await User.create({
         name,
         email,
         googleId,
         avatar,
         authProviders: ['google'],
+        isVerified: true, // trust Google's email verification
       });
     } else {
       // Update existing user with OAuth info if not already linked
@@ -262,6 +267,15 @@ export const googleCallback = async (req, res, next) => {
 
       if (!user.avatar && avatar) {
         user.avatar = avatar;
+        updated = true;
+      }
+
+      // FIX (2026-05-02): Existing accounts that were created before this
+      // patch (or via password registration without verifying) get their
+      // verification flipped here — completing the Google OAuth dance is
+      // proof of email ownership, same as clicking the verification link.
+      if (!user.isVerified) {
+        user.isVerified = true;
         updated = true;
       }
 

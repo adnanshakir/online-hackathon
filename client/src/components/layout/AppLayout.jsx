@@ -8,6 +8,7 @@ import { AmbientGlow } from '@/components/shared/AmbientGlow';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { isDemoMode } from '@/lib/demo';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -21,7 +22,10 @@ export function AppLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user?.workspace) {
+  // Real users without a workspace cannot use the app — bounce them to the
+  // workspace decision screen. Demo sessions skip this gate by design (the
+  // demo seed is workspace-less and reads from local mocks).
+  if (!isDemoMode() && !user?.workspace) {
     return <Navigate to="/workspace-decision" replace />;
   }
 

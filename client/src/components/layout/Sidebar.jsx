@@ -7,6 +7,7 @@ import {
   Settings,
   ChevronsLeft,
   ChevronsRight,
+  Server,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -16,6 +17,7 @@ import { useUIStore } from '@/store/uiStore';
 const NAV = [
   { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/app/incidents', label: 'Incidents', icon: AlertTriangle, badge: 2 },
+  { to: '/app/services', label: 'Services', icon: Server },
   { to: '/app/team', label: 'Team', icon: Users },
   { to: '/app/status', label: 'Status Page', icon: Globe },
   { to: '/app/settings', label: 'Settings', icon: Settings },

@@ -33,9 +33,11 @@ export default function Signup() {
     }
     setSubmitting(true);
     try {
+      // Brand new accounts have no workspace yet — go straight to the
+      // workspace decision screen.
       await api.register({ name, email, password });
       toast.success('Welcome to OpsWatch!');
-      navigate('/app/dashboard');
+      navigate('/workspace-decision');
     } catch (err) {
       const msg =
         err.response?.data?.message ||
