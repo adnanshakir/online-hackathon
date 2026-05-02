@@ -18,6 +18,24 @@ const serviceSchema = new mongoose.Schema(
         trim: true,
       },
     ],
+    environment: {
+      type: String,
+      required: true,
+      enum: ['production', 'staging', 'dev'],
+      default: 'production',
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    repoUrl: {
+      type: String,
+      trim: true,
+    },
+    liveUrl: {
+      type: String,
+      trim: true,
+    },
     workspace: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Workspace',

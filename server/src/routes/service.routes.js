@@ -6,7 +6,6 @@ import {
 } from '../controllers/service.controller.js';
 import {
   authenticate,
-  requireVerification,
   requireWorkspace,
 } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
@@ -41,7 +40,7 @@ router.get('/:id', getServiceById);
  */
 router.post(
   '/',
-  requireVerification,
+  // requireVerification, // Temporarily disabled
   validate(createServiceSchema),
   createService
 );

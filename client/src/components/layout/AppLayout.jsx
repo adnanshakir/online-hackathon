@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const { newIncidentOpen, setNewIncidentOpen } = useUIStore();
 
   // Hooks must be called before any early returns
@@ -18,6 +19,10 @@ export function AppLayout() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!user?.workspace) {
+    return <Navigate to="/workspace-decision" replace />;
   }
 
   return (
@@ -35,7 +40,10 @@ export function AppLayout() {
       {/* Global overlays */}
       <CommandPalette onCreateIncident={() => setNewIncidentOpen(true)} />
       <ShortcutsDialog />
-      <NewIncidentDialog open={newIncidentOpen} onOpenChange={setNewIncidentOpen} />
+      <NewIncidentDialog
+        open={newIncidentOpen}
+        onOpenChange={setNewIncidentOpen}
+      />
     </div>
   );
 }

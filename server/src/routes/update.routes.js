@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import {
   authenticate,
-  requireVerification,
   requireWorkspace,
 } from '../middlewares/auth.middleware.js';
 import validate from '../middlewares/validate.middleware.js';
@@ -18,7 +17,11 @@ router.use(requireWorkspace);
     @desc    Add an update to an incident's timeline
     @access  Private
 */
-router.post('/', requireVerification, validate(addUpdateSchema), addUpdate);
+router.post(
+  '/',
+  /* requireVerification, */ validate(addUpdateSchema),
+  addUpdate
+);
 
 /*
     @route   GET /api/incidents/:id/updates

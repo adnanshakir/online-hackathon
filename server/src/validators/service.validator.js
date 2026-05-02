@@ -20,11 +20,17 @@ export const createServiceSchema = z.object({
     .array(z.string())
     .min(1, 'At least one technology must be listed'),
 
-  environment: z.enum(['production', 'staging', 'dev']).optional(),
+  environment: z.enum(['production', 'staging', 'dev'], {
+    required_error: 'Environment is required',
+  }),
 
-  status: z.enum(['active', 'inactive']).optional(),
+  description: z.string().optional(),
 
-  repoUrl: z.string().url('Invalid repo URL').optional().or(z.literal('')),
+  repoUrl: z
+    .string()
+    .url('Invalid Repository URL')
+    .optional()
+    .or(z.literal('')),
 
-  liveUrl: z.string().url('Invalid live URL').optional().or(z.literal('')),
+  liveUrl: z.string().url('Invalid Live URL').optional().or(z.literal('')),
 });

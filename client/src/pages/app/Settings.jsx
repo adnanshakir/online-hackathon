@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
 import { toast } from 'sonner';
 import { CheckCircle2, LogOut } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -66,7 +66,12 @@ export default function Settings() {
   };
 
   return (
-    <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mx-auto max-w-5xl">
+    <motion.div
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
+      className="mx-auto max-w-5xl"
+    >
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
@@ -109,8 +114,12 @@ export default function Settings() {
               <div className="mt-5 flex items-center gap-4">
                 <Avatar user={user || { name: 'Demo User' }} size="xl" />
                 <div>
-                  <div className="text-base font-semibold">{user?.name || 'Demo User'}</div>
-                  <div className="text-xs text-[var(--color-muted)]">{user?.email || 'demo@opswatch.dev'}</div>
+                  <div className="text-base font-semibold">
+                    {user?.name || 'Demo User'}
+                  </div>
+                  <div className="text-xs text-[var(--color-muted)]">
+                    {user?.email || 'demo@opswatch.dev'}
+                  </div>
                 </div>
               </div>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -135,26 +144,72 @@ export default function Settings() {
           )}
 
           {tab === 'team' && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold">Team</h2>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">
-                Manage members and roles. Visit the{' '}
-                <a href="/app/team" className="underline">Team page</a> for the full member list.
-              </p>
-              <div className="mt-5 space-y-3">
-                <div className="space-y-2">
-                  <Label>Workspace name</Label>
-                  <Input defaultValue="OpsWatch Demo" />
+            <div className="space-y-4">
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold">Workspace Settings</h2>
+                <p className="mt-1 text-sm text-[var(--color-muted)]">
+                  Manage members and roles. Visit the{' '}
+                  <a href="/app/team" className="underline">
+                    Team page
+                  </a>{' '}
+                  for the full member list.
+                </p>
+                <div className="mt-5 space-y-4">
+                  <div className="space-y-2">
+                    <Label>Workspace name</Label>
+                    <Input
+                      defaultValue={
+                        user?.originalWorkspace?.name || 'OpsWatch Demo'
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Workspace slug</Label>
+                    <Input
+                      defaultValue={
+                        user?.originalWorkspace?.slug || 'opswatch-demo'
+                      }
+                    />
+                    <p className="text-[11px] text-[var(--color-muted)] uppercase tracking-wider">
+                      Status page: /status/
+                      {user?.originalWorkspace?.slug || '...'}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Workspace slug</Label>
-                  <Input defaultValue="opswatch-demo" />
-                  <p className="text-[11px] text-[var(--color-muted)]">
-                    Public status page: /status/opswatch-demo
-                  </p>
+              </Card>
+
+              {/* Invite Code Section */}
+              <Card className="border-[var(--color-brand-primary)]/20 bg-[var(--color-brand-primary)]/5 p-6 shadow-[0_0_20px_-10px_rgba(var(--color-brand-primary-rgb),0.2)]">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-brand-primary)]">
+                      Invite Code
+                    </h3>
+                    <p className="mt-1 text-[13px] text-[var(--color-muted-strong)]">
+                      Share this code with your teammates so they can join this
+                      workspace.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Card>
+
+                <div className="mt-6 flex items-center gap-3">
+                  <div className="flex-1 rounded-xl border border-[var(--color-brand-primary)]/30 bg-[var(--color-background)] px-4 py-3 font-mono text-xl font-bold tracking-[0.2em] text-[var(--color-foreground)] shadow-inner">
+                    {user?.originalWorkspace?.inviteCode || '------'}
+                  </div>
+                  <Button
+                    variant="gradient"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        user?.originalWorkspace?.inviteCode
+                      );
+                      toast.success('Code copied to clipboard');
+                    }}
+                  >
+                    Copy Code
+                  </Button>
+                </div>
+              </Card>
+            </div>
           )}
 
           {tab === 'notifications' && (
@@ -165,7 +220,10 @@ export default function Settings() {
                   { label: 'Email me when an incident is opened', on: true },
                   { label: 'Email me when status changes', on: true },
                   { label: 'Play sound when a new update arrives', on: false },
-                  { label: 'Send weekly digest of resolved incidents', on: true },
+                  {
+                    label: 'Send weekly digest of resolved incidents',
+                    on: true,
+                  },
                 ].map((opt) => (
                   <li
                     key={opt.label}
@@ -192,7 +250,9 @@ export default function Settings() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{it.name}</div>
-                      <div className="text-[11px] text-[var(--color-muted)]">{it.description}</div>
+                      <div className="text-[11px] text-[var(--color-muted)]">
+                        {it.description}
+                      </div>
                     </div>
                   </div>
                   <Button
@@ -218,7 +278,13 @@ export default function Settings() {
                 <div className="space-y-2">
                   <Label>Brand color</Label>
                   <div className="flex gap-2">
-                    {['#8b5cf6', '#3b82f6', '#10b981', '#f97316', '#ef4444'].map((c) => (
+                    {[
+                      '#8b5cf6',
+                      '#3b82f6',
+                      '#10b981',
+                      '#f97316',
+                      '#ef4444',
+                    ].map((c) => (
                       <button
                         key={c}
                         type="button"

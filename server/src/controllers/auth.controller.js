@@ -127,9 +127,9 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).select(
-      '+password +refreshToken +isVerified'
-    );
+    const user = await User.findOne({ email })
+      .select('+password +refreshToken +isVerified')
+      .populate('workspace');
     if (!user || !user.authProviders.includes('local') || !user.password) {
       throw new AppError('Invalid credentials', 401);
     }
@@ -236,7 +236,7 @@ export const googleCallback = async (req, res, next) => {
       throw new AppError('Google account must have an email associated.', 400);
     }
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email }).populate('workspace');
 
     if (!user) {
       // Create new OAuth user

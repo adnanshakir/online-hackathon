@@ -127,6 +127,8 @@ function toUser(raw) {
     role: raw.role,
     avatar: raw.avatar,
     authProviders: raw.authProviders,
+    workspace: raw.workspace?._id || raw.workspace,
+    originalWorkspace: typeof raw.workspace === 'object' ? raw.workspace : null,
   };
 }
 
@@ -135,20 +137,28 @@ function toUser(raw) {
 export async function listIncidents({ filter = 'all' } = {}) {
   if (isDemoMode()) {
     const incidents = useIncidentsStore.getState().incidents;
-    if (filter === 'active') return incidents.filter((i) => i.status !== 'resolved');
-    if (filter === 'resolved') return incidents.filter((i) => i.status === 'resolved');
+    if (filter === 'active')
+      return incidents.filter((i) => i.status !== 'resolved');
+    if (filter === 'resolved')
+      return incidents.filter((i) => i.status === 'resolved');
     return incidents;
   }
-  const { data } = await http.get('/incidents');
-  const incidents = data.map(toIncident);
-  if (filter === 'active') return incidents.filter((i) => i.status !== 'resolved');
-  if (filter === 'resolved') return incidents.filter((i) => i.status === 'resolved');
+  const { data: body } = await http.get('/incidents');
+  // Backend returns { data: [...] }
+  const rawList = body.data || [];
+  const incidents = rawList.map(toIncident);
+  if (filter === 'active')
+    return incidents.filter((i) => i.status !== 'resolved');
+  if (filter === 'resolved')
+    return incidents.filter((i) => i.status === 'resolved');
   return incidents;
 }
 
 export async function getIncident(id) {
   if (isDemoMode()) {
-    return useIncidentsStore.getState().incidents.find((i) => i.id === id) || null;
+    return (
+      useIncidentsStore.getState().incidents.find((i) => i.id === id) || null
+    );
   }
   const { data } = await http.get(`/incidents/${id}`);
   return toIncident(data);
@@ -173,7 +183,7 @@ export async function createIncident(payload) {
     title: payload.title,
     description: payload.description,
     severity: payload.severity || 'low',
-    service: (payload.serviceIds && payload.serviceIds[0]) || 'general',
+    service: payload.service,
   };
   const { data } = await http.post('/incidents', body);
   let incident = toIncident(data);
@@ -193,7 +203,9 @@ export async function changeStatus(incidentId, status) {
   if (isDemoMode()) {
     return useIncidentsStore.getState().changeStatus(incidentId, status);
   }
-  const { data } = await http.patch(`/incidents/${incidentId}/status`, { status });
+  const { data } = await http.patch(`/incidents/${incidentId}/status`, {
+    status,
+  });
   return toIncident(data);
 }
 
@@ -209,12 +221,27 @@ export async function assignUsers(incidentId, assignedTo) {
   return toIncident(data);
 }
 
-/**
- * Mock-only: backend exposes no general PATCH /:id, only /status and /assign.
- * Kept here so call sites compile; flagged so we know to ask backend later.
- */
-export async function updateIncident(incidentId, patch) {
-  return useIncidentsStore.getState().updateIncident(incidentId, patch);
+/* ────────── Services ────────── */
+
+export async function listServices() {
+  if (isDemoMode()) {
+    return SERVICES;
+  }
+  const { data: body } = await http.get('/services');
+  return body.data || [];
+}
+
+export async function getService(id) {
+  if (isDemoMode()) {
+    return getServiceById(id);
+  }
+  const { data } = await http.get(`/services/${id}`);
+  return data;
+}
+
+export async function createService(payload) {
+  const { data } = await http.post('/services', payload);
+  return data;
 }
 
 /* ────────── Timeline ────────── */
@@ -233,7 +260,8 @@ export async function getTimeline(incidentId) {
 export async function postUpdate(incidentId, update) {
   if (isDemoMode()) {
     return useIncidentsStore.getState().postUpdate(incidentId, {
-      authorId: update.authorId || useAuthStore.getState().user?.id || DEMO_USER.id,
+      authorId:
+        update.authorId || useAuthStore.getState().user?.id || DEMO_USER.id,
       message: update.message,
       statusChange: update.statusChange || null,
     });
@@ -272,16 +300,6 @@ export async function getUser(id) {
   return getUserById(id) || null;
 }
 
-/* ────────── Services (still mock — no Service model yet) ────────── */
-
-export async function listServices() {
-  return SERVICES;
-}
-
-export async function getService(id) {
-  return getServiceById(id) || null;
-}
-
 /* ────────── Postmortems (still mock — no Postmortem model yet) ────────── */
 
 export async function getIncidentPostmortem(incidentId) {
@@ -316,7 +334,11 @@ export async function login({ email, password }) {
  */
 export async function register({ name, email, password }) {
   if (isDemoMode()) {
-    const user = { ...DEMO_USER, name: name || DEMO_USER.name, email: email || DEMO_USER.email };
+    const user = {
+      ...DEMO_USER,
+      name: name || DEMO_USER.name,
+      email: email || DEMO_USER.email,
+    };
     useAuthStore.getState().setUser(user);
     return user;
   }
@@ -377,6 +399,34 @@ export async function me() {
     return null;
   }
 }
+
+/* ────────── Workspaces ────────── */
+
+export async function createWorkspace({ name, slug }) {
+  const { data } = await http.post('/workspace/create', { name, slug });
+  // After creating, refresh user session to get the workspace ID
+  await me();
+  return data;
+}
+
+export async function joinWorkspace({ inviteCode }) {
+  const { data } = await http.post('/workspace/join', { inviteCode });
+  // After joining, refresh user session to get the workspace ID
+  await me();
+  return data;
+}
+
+export const workspace = {
+  create: createWorkspace,
+  join: joinWorkspace,
+};
+
+/* ────────── Services ────────── */
+
+export const services = {
+  create: createService,
+  list: listServices,
+};
 
 /**
  * URL the "Continue with Google" button should redirect to. Backend handles

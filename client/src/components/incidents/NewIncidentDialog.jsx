@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react'; // eslint-disable-line no-unused-vars
 import { Sparkles, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -18,7 +18,6 @@ import { Label } from '@/components/ui/label';
 import { Avatar } from '@/components/shared/Avatar';
 import { SEVERITY } from '@/lib/constants';
 import { USERS } from '@/data/users';
-import { SERVICES } from '@/data/services';
 import { cn } from '@/lib/utils';
 import { suggestCauses } from '@/lib/ai';
 import * as api from '@/lib/api';
@@ -28,7 +27,8 @@ export function NewIncidentDialog({ open, onOpenChange }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [severity, setSeverity] = useState('high');
-  const [services, setServices] = useState([]);
+  const [selectedService, setSelectedService] = useState(null);
+  const [availableServices, setAvailableServices] = useState([]);
   const [responders, setResponders] = useState([]);
   const [suggestions, setSuggestions] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -38,11 +38,24 @@ export function NewIncidentDialog({ open, onOpenChange }) {
     setTitle('');
     setDescription('');
     setSeverity('high');
-    setServices([]);
+    setSelectedService(null);
     setResponders([]);
     setSuggestions(null);
     setAiLoading(false);
   };
+
+  const fetchServices = async () => {
+    try {
+      const data = await api.listServices();
+      setAvailableServices(data);
+    } catch (err) {
+      console.error('Failed to load services:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (open) fetchServices();
+  }, [open]);
 
   const toggle = (arr, setArr, id) => {
     setArr(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
@@ -58,11 +71,19 @@ export function NewIncidentDialog({ open, onOpenChange }) {
     try {
       const result = await suggestCauses(title, description);
       setSuggestions(result.suggestions || []);
-      toast.success(`AI found ${result.suggestions?.length || 0} probable causes`, {
-        description: result.source === 'gemini' ? 'Powered by Gemini' : 'Pattern-matched',
-      });
+      toast.success(
+        `AI found ${result.suggestions?.length || 0} probable causes`,
+        {
+          description:
+            result.source === 'gemini'
+              ? 'Powered by Gemini'
+              : 'Pattern-matched',
+        }
+      );
     } catch (err) {
-      toast.error('Could not get AI suggestions.', { description: err.message });
+      toast.error('Could not get AI suggestions.', {
+        description: err.message,
+      });
     } finally {
       setAiLoading(false);
     }
@@ -73,14 +94,18 @@ export function NewIncidentDialog({ open, onOpenChange }) {
       toast.error('Title is required.');
       return;
     }
+    if (!selectedService) {
+      toast.error('You must link this incident to a service.');
+      return;
+    }
     setSubmitting(true);
     try {
       const incident = await api.createIncident({
         title,
         description,
         severity,
-        serviceIds: services,
-        assigneeIds: responders.length ? responders : ['u_demo'],
+        service: selectedService,
+        assigneeIds: responders.length ? responders : [],
       });
       toast.success('Incident declared', { description: title });
       reset();
@@ -179,29 +204,38 @@ export function NewIncidentDialog({ open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Affected services */}
+          {/* Affected service — REQUIRED dropdown */}
           <div className="space-y-2">
-            <Label>Affected services</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {SERVICES.map((s) => {
-                const active = services.includes(s.id);
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => toggle(services, setServices, s.id)}
-                    className={cn(
-                      'rounded-full border px-3 py-1 text-xs transition-all',
-                      active
-                        ? 'border-[var(--color-brand-violet)] bg-[var(--color-brand-violet)]/10 text-[var(--color-foreground)]'
-                        : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-muted)]'
-                    )}
-                  >
-                    {s.name}
-                  </button>
-                );
-              })}
+            <div className="flex items-center justify-between">
+              <Label>Affected Service</Label>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-brand-primary)]">
+                Required
+              </span>
             </div>
+            <select
+              value={selectedService || ''}
+              onChange={(e) => setSelectedService(e.target.value)}
+              className={cn(
+                'h-11 w-full rounded-lg border bg-[var(--color-surface)] px-3 text-sm font-medium transition-all focus:outline-none focus:ring-2',
+                selectedService
+                  ? 'border-[var(--color-brand-primary)]/50 focus:ring-[var(--color-brand-primary)]/20'
+                  : 'border-[var(--color-border)] focus:ring-[var(--color-ring)]'
+              )}
+            >
+              <option value="" disabled>
+                Select the affected service…
+              </option>
+              {availableServices.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name} ({s.type})
+                </option>
+              ))}
+            </select>
+            {availableServices.length === 0 && (
+              <p className="text-[10px] text-amber-500">
+                No services found. Please create a service first in Settings.
+              </p>
+            )}
           </div>
 
           {/* Responders */}
@@ -250,7 +284,12 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                   </div>
                 </div>
               </div>
-              <Button size="sm" variant="outline" onClick={handleAI} disabled={aiLoading}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleAI}
+                disabled={aiLoading}
+              >
                 {aiLoading ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" /> Analyzing…
@@ -286,7 +325,9 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                           {Math.round((s.probability || 0) * 100)}% match
                         </span>
                       </div>
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">{s.reasoning}</p>
+                      <p className="mt-1 text-xs text-[var(--color-muted)]">
+                        {s.reasoning}
+                      </p>
                       {s.checks?.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {s.checks.map((c, j) => (
@@ -311,7 +352,11 @@ export function NewIncidentDialog({ open, onOpenChange }) {
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="gradient" onClick={handleSubmit} disabled={submitting}>
+          <Button
+            variant="gradient"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Declare incident
           </Button>

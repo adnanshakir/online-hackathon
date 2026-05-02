@@ -23,7 +23,7 @@ export const authenticate = async (req, res, next) => {
       throw new AppError('Invalid access token', 401);
     }
 
-    const user = await User.findById(payload.id);
+    const user = await User.findById(payload.id).populate('workspace');
 
     if (!user) {
       throw new AppError('User no longer exists', 401);

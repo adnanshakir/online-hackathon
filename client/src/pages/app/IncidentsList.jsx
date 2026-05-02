@@ -1,15 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { Plus, Search, Filter } from 'lucide-react';
+import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { Plus, Search, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IncidentsTable } from '@/components/incidents/IncidentsTable';
-import { useIncidentsStore } from '@/store/incidentsStore';
 import { useUIStore } from '@/store/uiStore';
 import { SEVERITY } from '@/lib/constants';
 import { fadeUp } from '@/components/motion/variants';
 import { cn } from '@/lib/utils';
+import { listIncidents } from '@/lib/api';
 
 const TABS = [
   { id: 'all', label: 'All' },
@@ -18,27 +18,45 @@ const TABS = [
 ];
 
 export default function IncidentsList() {
-  const incidents = useIncidentsStore((s) => s.incidents);
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const setNewIncidentOpen = useUIStore((s) => s.setNewIncidentOpen);
   const [params, setParams] = useSearchParams();
   const filter = params.get('filter') || 'all';
+  const severityFilter = params.get('severity') || 'all';
   const [query, setQuery] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('all');
+
+  const fetchIncidents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await listIncidents({
+        filter: filter === 'all' ? undefined : filter,
+        severity: severityFilter === 'all' ? undefined : severityFilter,
+      });
+      setIncidents(data);
+    } catch (err) {
+      console.error('Failed to fetch incidents:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, severityFilter]);
+
+  useEffect(() => {
+    fetchIncidents();
+  }, [fetchIncidents]);
 
   const filtered = useMemo(() => {
     let out = incidents;
-    if (filter === 'active') out = out.filter((i) => i.status !== 'resolved');
-    if (filter === 'resolved') out = out.filter((i) => i.status === 'resolved');
-    if (severityFilter !== 'all') out = out.filter((i) => i.severity === severityFilter);
     if (query.trim()) {
       const q = query.toLowerCase();
       out = out.filter(
         (i) =>
-          i.title.toLowerCase().includes(q) || i.description.toLowerCase().includes(q)
+          i.title.toLowerCase().includes(q) ||
+          i.description?.toLowerCase().includes(q)
       );
     }
     return out.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [incidents, filter, severityFilter, query]);
+  }, [incidents, query]);
 
   const counts = useMemo(
     () => ({
@@ -63,7 +81,11 @@ export default function IncidentsList() {
             Triage, assign, and track every incident.
           </p>
         </div>
-        <Button variant="gradient" size="sm" onClick={() => setNewIncidentOpen(true)}>
+        <Button
+          variant="gradient"
+          size="sm"
+          onClick={() => setNewIncidentOpen(true)}
+        >
           <Plus className="h-4 w-4" /> New incident
         </Button>
       </div>
@@ -111,7 +133,12 @@ export default function IncidentsList() {
           <Filter className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted)]" />
           <select
             value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
+            onChange={(e) => {
+              const next = new URLSearchParams(params);
+              if (e.target.value === 'all') next.delete('severity');
+              else next.set('severity', e.target.value);
+              setParams(next);
+            }}
             className="h-10 appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-xs font-medium text-[var(--color-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
           >
             <option value="all">All severities</option>
@@ -124,7 +151,21 @@ export default function IncidentsList() {
         </div>
       </div>
 
-      <IncidentsTable incidents={filtered} />
+      {loading ? (
+        <div className="flex h-64 flex-col items-center justify-center gap-3">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+          >
+            <Loader2 className="h-8 w-8 text-[var(--color-brand-primary)]" />
+          </motion.div>
+          <p className="text-sm text-[var(--color-muted)]">
+            Syncing with HQ...
+          </p>
+        </div>
+      ) : (
+        <IncidentsTable incidents={filtered} />
+      )}
     </motion.div>
   );
 }

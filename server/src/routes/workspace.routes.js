@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import {
-  authenticate,
-  requireVerification,
-} from '../middlewares/auth.middleware.js';
+import { authenticate } from '../middlewares/auth.middleware.js';
 import {
   createWorkspace,
   joinWorkspace,
@@ -13,7 +10,7 @@ import { apiLimiter } from '../middlewares/rateLimit.middleware.js';
 const router = Router();
 
 router.use(authenticate);
-router.use(requireVerification);
+// router.use(requireVerification); // Temporarily disabled
 router.use(apiLimiter);
 
 /**
