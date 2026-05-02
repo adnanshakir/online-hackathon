@@ -16,13 +16,10 @@ export const createWorkspace = async (req, res, next) => {
       throw new AppError('You already belong to a workspace', 400);
     }
 
-    const existing = await Workspace.findOne({ slug });
-    if (existing) throw new AppError('Workspace slug already exists', 400);
-
     const workspace = await Workspace.create({
       name,
       slug,
-      systemContext,
+      systemContext: systemContext || {},
       inviteCode: generateInviteCode(),
       createdBy: req.user._id,
     });
@@ -219,6 +216,14 @@ export const updateWorkspaceContext = async (req, res, next) => {
       'integrations',
       'repoUrl',
     ];
+
+    const hasValidField = Object.keys(req.body).some((key) =>
+      allowed.includes(key)
+    );
+
+    if (!hasValidField) {
+      throw new AppError('No valid fields provided', 400);
+    }
 
     // Ensure systemContext exists on the document
     if (!workspace.systemContext) {
