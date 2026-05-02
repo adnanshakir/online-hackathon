@@ -45,6 +45,7 @@ router.post('/register', authLimiter, validate(registerSchema), register);
 /*
     @route   POST /api/auth/login
     @desc    Authenticate user and issue tokens (via cookies)
+    @desc    Authenticate user and issue tokens (via cookies)
     @access  Public
 */
 router.post('/login', authLimiter, validate(loginSchema), login);
@@ -59,12 +60,14 @@ router.get('/me', authenticate, getMe);
 /*
     @route   POST /api/auth/refresh-token
     @desc    Issue new access token using refresh token
+    @desc    Issue new access token using refresh token
     @access  Public
 */
 router.post('/refresh-token', refreshAccessToken);
 
 /*
     @route   POST /api/auth/logout
+    @desc    Clear tokens (cookie + DB) and invalidate session
     @desc    Clear tokens (cookie + DB) and invalidate session
     @access  Private
 */
@@ -140,6 +143,30 @@ router.post(
   strictLimiter,
   validate(resendVerificationSchema),
   resendVerificationEmail
+);
+
+/*
+    @route   GET /api/auth/google
+    @desc    Redirect user to Google OAuth consent screen
+    @access  Public
+*/
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+/*
+    @route   GET /api/auth/google/callback
+    @desc    Handle Google OAuth callback and login/register user
+    @access  Public
+*/
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: '/login',
+  }),
+  googleCallback
 );
 
 export default router;

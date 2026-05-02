@@ -246,6 +246,7 @@ export const googleCallback = async (req, res, next) => {
         googleId,
         avatar,
         authProviders: ['google'],
+        isVerified: true,
       });
     } else {
       // Update existing user with OAuth info if not already linked
