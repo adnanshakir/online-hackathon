@@ -36,31 +36,31 @@ export function LandingFooter() {
           <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--color-muted)]">
             <a
               href="#features"
-              className="transition-colors hover:text-[var(--color-foreground)]"
+              className="transition-colors duration-300 hover:text-[var(--color-brand-primary)]"
             >
               Features
             </a>
             <a
               href="#ai"
-              className="transition-colors hover:text-[var(--color-foreground)]"
+              className="transition-colors duration-300 hover:text-[var(--color-brand-primary)]"
             >
               AI Brief
             </a>
             <a
               href="#how"
-              className="transition-colors hover:text-[var(--color-foreground)]"
+              className="transition-colors duration-300 hover:text-[var(--color-brand-primary)]"
             >
               How it works
             </a>
             <Link
               to="/status/opswatch-demo"
-              className="transition-colors hover:text-[var(--color-foreground)]"
+              className="transition-colors duration-300 hover:text-[var(--color-brand-primary)]"
             >
               Status
             </Link>
             <Link
               to="/login"
-              className="transition-colors hover:text-[var(--color-foreground)]"
+              className="transition-colors duration-300 hover:text-[var(--color-brand-primary)]"
             >
               Sign in
             </Link>
@@ -78,7 +78,7 @@ export function LandingFooter() {
         className="relative mt-10 mb- select-none overflow-hidden"
       >
         <div
-          className="whitespace-nowrap text-center font-black leading-[0.8] text-white/50"
+          className="whitespace-nowrap text-center font-black leading-[0.8] text-white/50 transition-colors duration-700 hover:text-[var(--color-brand-primary)]/40"
           style={{
             fontSize: 'clamp(4rem, 18vw, 20rem)',
             letterSpacing: '-0.05em',

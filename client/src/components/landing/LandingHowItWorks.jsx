@@ -14,7 +14,7 @@ export function LandingHowItWorks() {
             <h2 className="mt-4 text-4xl font-semibold tracking-[-0.03em] md:text-[52px]">
               From alert{' '}
               <span className="text-[var(--color-brand-primary)]">
-                to all-clear.
+                to all clear.
               </span>
             </h2>
           </div>

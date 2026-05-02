@@ -35,20 +35,20 @@ export function LandingHero() {
     >
       {/* Base very dim dot grid */}
       <div
-        className="absolute inset-0 z-0 opacity-[0.03]"
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.02]"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+            'radial-gradient(circle at 2px 2px, var(--color-brand-primary) 1.2px, transparent 0)',
           backgroundSize: '24px 24px',
         }}
       />
 
       {/* Spotlight dot grid that reveals on hover */}
       <div
-        className="absolute inset-0 z-0 opacity-0 transition-opacity duration-500 group-hover:opacity-[0.15]"
+        className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-500 group-hover:opacity-[0.1]"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)',
+            'radial-gradient(circle at 2px 2px, var(--color-brand-primary) 1.2px, transparent 0)',
           backgroundSize: '24px 24px',
           WebkitMaskImage:
             'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)',

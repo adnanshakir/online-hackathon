@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion as Motion } from 'motion/react';
+import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
 import { Sparkles, Target, AlertTriangle } from 'lucide-react';
 
 export function CreativeAIBriefShowcase() {
@@ -20,6 +20,29 @@ export function CreativeAIBriefShowcase() {
       onMouseMove={handleMouseMove}
       className="group relative flex h-[500px] md:h-[600px] w-full items-center justify-center overflow-hidden rounded-3xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-foreground)] shadow-2xl"
     >
+      {/* Base very dim dot grid */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 opacity-[0.02]"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 2px 2px, var(--color-brand-primary) 1.2px, transparent 0)',
+          backgroundSize: '24px 24px',
+        }}
+      />
+
+      {/* Spotlight dot grid that reveals on hover */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-500 group-hover:opacity-[0.1]"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 2px 2px, var(--color-brand-primary) 1.2px, transparent 0)',
+          backgroundSize: '24px 24px',
+          WebkitMaskImage:
+            'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)',
+          maskImage:
+            'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)',
+        }}
+      />
       <motion.div
         initial={{ opacity: 0, x: -40, rotate: -12 }}
         whileInView={{ opacity: 1, x: 0, rotate: -8 }}

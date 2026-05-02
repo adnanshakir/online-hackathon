@@ -17,10 +17,7 @@ export function Logo({ className, showWordmark = true, size = 'md' }) {
     <Link
       to="/"
       aria-label={`${APP_NAME} — go to homepage`}
-      className={cn(
-        'inline-flex items-center gap-2 transition-opacity hover:opacity-80',
-        className
-      )}
+      className={cn('group inline-flex items-center gap-2', className)}
     >
       <svg
         viewBox="0 0 24 24"
@@ -32,7 +29,7 @@ export function Logo({ className, showWordmark = true, size = 'md' }) {
         <circle cx="12" cy="12" r="3" fill="currentColor" />
       </svg>
       {showWordmark && (
-        <span className="font-semibold tracking-[-0.03em] text-[var(--color-foreground)]">
+        <span className="font-semibold tracking-[-0.03em] text-[var(--color-foreground)] transition-colors duration-300 group-hover:text-[var(--color-brand-primary)]">
           {APP_NAME}
         </span>
       )}

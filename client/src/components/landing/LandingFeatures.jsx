@@ -27,9 +27,9 @@ export function LandingFeatures() {
           </h2>
         </div>
 
-        <SpotlightGrid className="mt-16 grid grid-cols-1 gap-4 md:grid-cols-3 md:grid-rows-2">
+        <SpotlightGrid className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* AI Brief — large hero card */}
-          <motion.div variants={fadeUp} className="md:col-span-2 md:row-span-2">
+          <motion.div variants={fadeUp} className="sm:col-span-2 lg:row-span-2">
             <div className="spotlight-card relative h-full overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 dark:border-white/10 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
               <div className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -95,7 +95,7 @@ export function LandingFeatures() {
           </motion.div>
         </SpotlightGrid>
 
-        <SpotlightGrid className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <SpotlightGrid className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               icon: Zap,
@@ -105,7 +105,7 @@ export function LandingFeatures() {
             {
               icon: Users,
               title: 'Smart role assignment',
-              text: 'Assign owners and responders so accountability is crystal-clear.',
+              text: 'Assign owners and responders so accountability is clear.',
             },
             {
               icon: ShieldCheck,

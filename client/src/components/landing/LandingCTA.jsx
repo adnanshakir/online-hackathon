@@ -27,7 +27,7 @@ export function LandingCTA() {
             size="xl"
             className="rounded-full px-7"
           >
-            <Link to="/signup">Get started — it's free</Link>
+            <Link to="/signup">Get started it's free</Link>
           </Button>
           <Button
             asChild
