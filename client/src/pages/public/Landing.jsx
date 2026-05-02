@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import Lenis from 'lenis';
-import { motion } from 'motion/react';
-const Motion = motion;
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 // Shared Components
 import { ScrollRevealParagraph } from '@/components/landing/ScrollReveal';
 import { DualMarquee } from '@/components/landing/DualMarquee';

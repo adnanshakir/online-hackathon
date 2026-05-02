@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-const Motion = motion;
+import { motion as _motion } from 'framer-motion';
+const Motion = _motion;
 
 const SecurityShieldShowcase = () => {
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
-const Motion = motion;
+import { motion as _motion, AnimatePresence } from 'motion/react';
+const Motion = _motion;
 import {
   Plus,
   ArrowRight,

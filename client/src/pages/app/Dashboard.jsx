@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-const Motion = motion;
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import {
   AlertTriangle,
   Clock,

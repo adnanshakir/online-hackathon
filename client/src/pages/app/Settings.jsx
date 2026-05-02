@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-const Motion = motion;
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import { toast } from 'sonner';
 import { CheckCircle2, LogOut } from 'lucide-react';
 import { Card } from '@/components/ui/card';

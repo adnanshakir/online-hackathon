@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
-const Motion = motion;
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import { Plus, UserPlus, Shield, User, MoreVertical, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';

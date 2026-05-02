@@ -1,5 +1,5 @@
-import { motion } from 'motion/react';
-const Motion = motion;
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import {
   Sparkles,
   Activity,

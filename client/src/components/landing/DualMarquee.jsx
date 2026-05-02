@@ -1,6 +1,6 @@
 import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
-const Motion = motion;
+import { motion as _motion, useScroll, useTransform } from 'motion/react';
+const Motion = _motion;
 
 export function DualMarquee() {
   const ref = useRef(null);
