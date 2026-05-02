@@ -15,6 +15,7 @@ import { RespondersCard } from '@/components/incidents/RespondersCard';
 import { AffectedServicesCard } from '@/components/incidents/AffectedServicesCard';
 import { DetailsCard } from '@/components/incidents/DetailsCard';
 import { ActionsCard } from '@/components/incidents/ActionsCard';
+import { AIBriefCard } from '@/components/incidents/AIBriefCard';
 import { LiveViewers } from '@/components/incidents/LiveViewers';
 import { TypingIndicator } from '@/components/incidents/TypingIndicator';
 import { useIncidentsStore } from '@/store/incidentsStore';
@@ -194,6 +195,9 @@ export default function IncidentDetail() {
         </div>
 
         <aside className="space-y-4">
+          {/* AI Brief sits at the top of the sidebar — it's the headline
+              feature and the most-clicked thing on this page. */}
+          <AIBriefCard incidentId={incident.id} />
           <RespondersCard
             assigneeIds={incident.assigneeIds}
             onAdd={() => toast.info('Add responder — coming soon')}

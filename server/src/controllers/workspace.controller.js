@@ -78,7 +78,10 @@ export const updateUserRole = async (req, res, next) => {
     const user = await User.findById(userId);
     if (!user) throw new AppError('User not found', 404);
 
-    if (user.workspace?.toString() !== req.user.workspace.toString()) {
+    if (
+      user.workspace?.toString() !==
+      (req.user.workspace._id || req.user.workspace).toString()
+    ) {
       throw new AppError('User not in same workspace', 400);
     }
 
@@ -121,7 +124,17 @@ export const getWorkspaceMembers = async (req, res, next) => {
   try {
     const members = await User.find({ workspace: req.user.workspace })
       .select('_id name email role')
-      .sort({ role: 1, name: 1 });
+      .lean();
+
+    const rolePriority = {
+      owner: 1,
+      admin: 2,
+      member: 3,
+    };
+
+    members.sort((a, b) => {
+      return rolePriority[a.role] - rolePriority[b.role];
+    });
 
     return res.status(200).json({ data: members });
   } catch (error) {
