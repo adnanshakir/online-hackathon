@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getIncidentSummary,
   getIncidentRootCause,
+  suggestIncidentCauses,
 } from '../controllers/ai.controller.js';
 import {
   authenticate,
@@ -29,5 +30,12 @@ router.get('/incidents/:id/summary', getIncidentSummary);
  * @access Private
  */
 router.get('/incidents/:id/root-cause', getIncidentRootCause);
+
+/**
+ * @route POST /api/ai/suggest-causes
+ * @desc Get AI-generated root cause suggestions for a new incident based on workspace context
+ * @access Private
+ */
+router.post('/suggest-causes', suggestIncidentCauses);
 
 export default router;

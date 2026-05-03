@@ -14,14 +14,7 @@ export const addUpdate = async (req, res, next) => {
       throw new AppError('Incident not found', 404);
     }
 
-    // Check access: admin or assigned to incident
-    const isAssigned = incident.assignedTo.some(
-      (id) => id.toString() === req.user._id.toString()
-    );
-
-    if (!['admin', 'owner'].includes(req.user.role) && !isAssigned) {
-      throw new AppError('Forbidden', 403);
-    }
+    // Any workspace member can contribute to the incident log
 
     const update = await Update.create({
       incident: req.params.id,
@@ -39,28 +32,12 @@ export const addUpdate = async (req, res, next) => {
 
 export const getUpdates = async (req, res, next) => {
   try {
-    const incident = await Incident.findOne({
-      _id: req.params.id,
-      workspace: req.user.workspace,
-    });
-
-    if (!incident) {
-      throw new AppError('Incident not found', 404);
-    }
-
-    const isAssigned = incident.assignedTo.some(
-      (id) => id.toString() === req.user._id.toString()
-    );
-
-    if (!['admin', 'owner'].includes(req.user.role) && !isAssigned) {
-      throw new AppError('Forbidden', 403);
-    }
-
+    // Any workspace member can view the timeline
     const updates = await Update.find({
       incident: req.params.id,
       workspace: req.user.workspace,
     })
-      .populate('createdBy', 'name email')
+      .populate('createdBy', 'name email avatar')
       .sort({ createdAt: 1 });
 
     return res.status(200).json(updates);

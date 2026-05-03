@@ -11,6 +11,8 @@ import {
   deleteWorkspace,
   updateWorkspaceContext,
   inviteMember,
+  getStatusPageSettings,
+  updateStatusPageSettings,
 } from '../controllers/workspace.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import { systemContextSchema } from '../validators/workspace.validator.js';
@@ -89,5 +91,19 @@ router.post('/invite', requireWorkspace, inviteMember);
  * @access Private
  */
 router.delete('/', requireWorkspace, deleteWorkspace);
+
+/**
+ * @route GET /api/workspace/status-page
+ * @desc Get status page settings
+ * @access Private
+ */
+router.get('/status-page', requireWorkspace, getStatusPageSettings);
+
+/**
+ * @route PATCH /api/workspace/status-page
+ * @desc Update status page settings
+ * @access Private
+ */
+router.patch('/status-page', requireWorkspace, updateStatusPageSettings);
 
 export default router;

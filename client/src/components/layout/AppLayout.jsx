@@ -9,6 +9,7 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { isDemoMode } from '@/lib/demo';
+import { useNotificationToast } from '@/hooks/useNotificationToast';
 
 export function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -17,6 +18,7 @@ export function AppLayout() {
 
   // Hooks must be called before any early returns
   useKeyboardShortcuts({ onCreateIncident: () => setNewIncidentOpen(true) });
+  useNotificationToast();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

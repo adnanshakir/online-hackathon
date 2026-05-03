@@ -170,3 +170,68 @@ ${recentUpdates.length > 0 ? recentUpdates.map((u) => '- ' + u.message).join('\n
     return next(error);
   }
 };
+
+// Generate root cause suggestions for a NEW incident based on workspace context
+export const suggestIncidentCauses = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+
+    if (!title && !description) {
+      throw new AppError('Please provide a title or description', 400);
+    }
+
+    const workspace = await Workspace.findById(req.user.workspace).select(
+      'systemContext'
+    );
+    const ctx = workspace?.systemContext ?? {};
+
+    const prompt = `
+You are an expert SRE assistant analyzing a new, unsubmitted incident report.
+
+Determine the most likely root causes using the provided Workspace System Context.
+
+Rules:
+- Return a JSON array of exactly 3 probable root causes.
+- Each item must have exactly these keys:
+  - "title": short cause name (max 8 words)
+  - "probability": float 0-1
+  - "reasoning": 1-2 sentence explanation
+  - "checks": array of 3 short diagnostic checks
+- Focus heavily on technical causes based on the provided Tech Stack and Integrations.
+- Return ONLY the JSON array, no markdown blocks, no commentary.
+
+System Context:
+  Project: ${ctx.projectName || 'Not specified'}
+  Stack: ${ctx.stackPreset || 'Not specified'}
+  Tech Stack: ${ctx.techStack?.join(', ') || 'Not specified'}
+  Integrations: ${ctx.integrations?.join(', ') || 'None'}
+  Architecture Notes: ${ctx.architectureNotes || 'None'}
+
+Incident Report:
+  Title: ${title || 'N/A'}
+  Description: ${description || 'N/A'}
+`;
+
+    const aiResponse = await generateAIResponse(prompt);
+
+    let suggestions = [];
+    try {
+      const cleanJson = aiResponse.replace(/```json|```/g, '').trim();
+      suggestions = JSON.parse(cleanJson);
+    } catch (e) {
+      console.error(
+        '[ai.controller] Failed to parse suggestions:',
+        e.message,
+        aiResponse
+      );
+      suggestions = [];
+    }
+
+    return res.status(200).json({
+      success: true,
+      suggestions,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

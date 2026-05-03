@@ -2,9 +2,17 @@ import { Router } from 'express';
 import {
   getStatus,
   getStatusHistory,
+  getPublicStatusPage,
 } from '../controllers/status.controller.js';
 
 const router = Router();
+
+/**
+ * @route GET /api/status/page/:slug
+ * @desc Get public status page data by slug
+ * @access Public
+ */
+router.get('/page/:slug', getPublicStatusPage);
 
 /**
  * @route GET /api/status

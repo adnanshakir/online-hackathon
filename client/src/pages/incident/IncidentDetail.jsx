@@ -47,7 +47,9 @@ export default function IncidentDetail() {
 
   const [incident, setIncident] = useState(null);
   const [updates, setUpdates] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [typing, setTyping] = useState(false);
@@ -58,15 +60,19 @@ export default function IncidentDetail() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [incidentData, updatesData] = await Promise.all([
+      const [incidentData, updatesData, membersData] = await Promise.all([
         api.getIncident(id),
         api.getTimeline(id),
+        api.workspace.listUsers(),
       ]);
       setIncident(incidentData);
       setUpdates(updatesData);
+      setMembers(membersData);
       setTitleDraft(incidentData.title);
+      setError(null);
     } catch (_err) {
       console.error('Failed to fetch incident data:', _err);
+      setError(_err.response?.data?.message || 'Failed to load incident.');
     } finally {
       setLoading(false);
     }
@@ -117,7 +123,7 @@ export default function IncidentDetail() {
       });
       await fetchData();
       toast.success('Incident closed');
-    } catch (err) {
+    } catch {
       toast.error('Failed to close incident');
     } finally {
       setLoading(false);
@@ -137,6 +143,16 @@ export default function IncidentDetail() {
     setEditingTitle(false);
   };
 
+  const handleAssign = async (userIds) => {
+    try {
+      const updatedIncident = await api.assignResponders(incident.id, userIds);
+      setIncident(updatedIncident);
+      toast.success('Responders updated');
+    } catch {
+      toast.error('Failed to update responders');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-96 flex-col items-center justify-center gap-4">
@@ -153,16 +169,18 @@ export default function IncidentDetail() {
     );
   }
 
-  if (!incident) {
+  if (error || !incident) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center">
-        <p className="text-sm text-[var(--color-muted)]">Incident not found.</p>
+        <p className="text-sm text-[var(--color-muted)]">
+          {error || 'Incident not found.'}
+        </p>
         <Button
           variant="ghost"
           className="mt-4"
           onClick={() => navigate('/app/incidents')}
         >
-          <ArrowLeft className="h-4 w-4" /> Back to incidents
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to incidents
         </Button>
       </div>
     );
@@ -280,11 +298,6 @@ export default function IncidentDetail() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/app/incidents/${incident.id}/postmortem`}>
-                Generate Postmortem
-              </Link>
-            </Button>
             <Button variant="ghost" size="icon" className="rounded-full">
               <MoreHorizontal className="h-5 w-5" />
             </Button>
@@ -310,8 +323,9 @@ export default function IncidentDetail() {
               feature and the most-clicked thing on this page. */}
           <AIBriefCard incidentId={incident.id} />
           <RespondersCard
-            assigneeIds={incident.assigneeIds}
-            onAdd={() => {}} // Now handled by the internal invite button or could be extended later
+            users={incident.assignedTo}
+            allMembers={members}
+            onAssign={handleAssign}
           />
           <AffectedServicesCard serviceIds={incident.serviceIds} />
           <DetailsCard incident={incident} />

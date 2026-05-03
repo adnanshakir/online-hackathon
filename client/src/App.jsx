@@ -115,7 +115,7 @@ export default function App() {
             </PublicRoute>
           }
         />
-        <Route path="/status/:teamSlug" element={<PublicStatus />} />
+        <Route path="/s/:teamSlug" element={<PublicStatus />} />
         {/* Email verification target — links from the verification email
             land here. Always reachable (no auth gate) so anonymous clicks
             still work, e.g. when the user is signed out on this device. */}

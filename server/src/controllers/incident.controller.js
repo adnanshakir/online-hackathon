@@ -9,10 +9,11 @@ export const createIncident = async (req, res, next) => {
   try {
     const { title, description, severity, service: serviceId } = req.body;
 
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     // Validate service belongs to workspace
     const service = await Service.findOne({
       _id: serviceId,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     });
 
     if (!service) {
@@ -25,7 +26,7 @@ export const createIncident = async (req, res, next) => {
       severity,
       service: serviceId,
       createdBy: req.user._id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     });
 
     await incident.populate([
@@ -60,8 +61,9 @@ export const getIncidents = async (req, res, next) => {
       assigned,
     } = req.query;
 
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     const query = {
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     };
 
     // filters
@@ -113,10 +115,11 @@ export const updateIncidentStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
 
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     // Fetch incident first to check access
     const incident = await Incident.findOne({
       _id: req.params.id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     });
 
     if (!incident) {
@@ -143,7 +146,7 @@ export const updateIncidentStatus = async (req, res, next) => {
     // Record status transitions in the incident timeline.
     await Update.create({
       incident: incident._id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
       message: `Status changed to ${status}`,
       type: 'status_change',
       createdBy: req.user._id,
@@ -167,18 +170,28 @@ export const updateIncidentStatus = async (req, res, next) => {
 
 export const assignUsers = async (req, res, next) => {
   try {
-    // Check access: admin only
-    if (!['admin', 'owner'].includes(req.user.role)) {
-      throw new AppError('Forbidden', 403);
-    }
-
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     const incident = await Incident.findOne({
       _id: req.params.id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     });
 
     if (!incident) {
       throw new AppError('Incident not found', 404);
+    }
+
+    // Check access: admin/owner OR the person who created the incident
+    const isCreator = incident.createdBy.toString() === req.user._id.toString();
+    const isAdmin = ['admin', 'owner'].includes(req.user.role);
+
+    if (!isAdmin && !isCreator) {
+      console.error(
+        `[assignUsers] Access denied for user ${req.user.email}. Role: ${req.user.role}`
+      );
+      throw new AppError(
+        'Forbidden: Only admins, owners, or the incident creator can manage responders.',
+        403
+      );
     }
 
     if (Array.isArray(req.body.assignedTo)) {
@@ -233,9 +246,10 @@ export const assignUsers = async (req, res, next) => {
 
 export const getIncidentById = async (req, res, next) => {
   try {
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     const incident = await Incident.findOne({
       _id: req.params.id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     })
       .populate('createdBy', 'name email')
       .populate('assignedTo', 'name email')
@@ -253,9 +267,10 @@ export const getIncidentById = async (req, res, next) => {
 
 export const updateIncident = async (req, res, next) => {
   try {
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     const incident = await Incident.findOne({
       _id: req.params.id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     });
 
     if (!incident) {
@@ -275,7 +290,7 @@ export const updateIncident = async (req, res, next) => {
     if (req.body.service) {
       const service = await Service.findOne({
         _id: req.body.service,
-        workspace: req.user.workspace,
+        workspace: workspaceId,
       });
 
       if (!service) {
@@ -314,7 +329,7 @@ export const updateIncident = async (req, res, next) => {
     // Log update only if something changed
     await Update.create({
       incident: incident._id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
       message: 'Incident updated',
       type: 'log',
       createdBy: req.user._id,
@@ -339,9 +354,10 @@ export const deleteIncident = async (req, res, next) => {
       throw new AppError('Forbidden', 403);
     }
 
+    const workspaceId = req.user.workspace._id || req.user.workspace;
     const incident = await Incident.findOne({
       _id: req.params.id,
-      workspace: req.user.workspace,
+      workspace: workspaceId,
     });
 
     if (!incident) {
@@ -351,7 +367,7 @@ export const deleteIncident = async (req, res, next) => {
     await Promise.all([
       Update.deleteMany({
         incident: incident._id,
-        workspace: req.user.workspace,
+        workspace: workspaceId,
       }),
       incident.deleteOne(),
     ]);
