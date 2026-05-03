@@ -14,7 +14,7 @@ export const getIncidentSummary = async (req, res, next) => {
       workspace: req.user.workspace,
     }).populate(
       'service',
-      'name type techStack environment description status'
+      'name type environment description status'
     );
 
     if (!incident) {
@@ -56,7 +56,6 @@ System Context:
 Service:
   Name: ${incident.service?.name ?? 'Unknown'}
   Type: ${incident.service?.type ?? 'Unknown'}
-  Tech Stack: ${incident.service?.techStack?.join(', ') || 'Not specified'}
   Environment: ${incident.service?.environment ?? 'Unknown'}
   Description: ${incident.service?.description || 'Not provided'}
   Status: ${incident.service?.status ?? 'Unknown'}
@@ -92,7 +91,7 @@ export const getIncidentRootCause = async (req, res, next) => {
       workspace: req.user.workspace,
     }).populate(
       'service',
-      'name type techStack environment description status'
+      'name type environment description status'
     );
 
     if (!incident) {
@@ -134,7 +133,6 @@ System Context:
 Service:
   Name: ${incident.service?.name ?? 'Unknown'}
   Type: ${incident.service?.type ?? 'Unknown'}
-  Tech Stack: ${incident.service?.techStack?.join(', ') || 'Not specified'}
   Environment: ${incident.service?.environment ?? 'Unknown'}
   Description: ${incident.service?.description || 'Not provided'}
   Status: ${incident.service?.status ?? 'Unknown'}

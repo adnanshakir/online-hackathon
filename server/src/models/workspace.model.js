@@ -9,7 +9,6 @@ const workspaceSchema = new mongoose.Schema(
     },
     slug: {
       type: String,
-      required: true,
       lowercase: true,
       trim: true,
     },

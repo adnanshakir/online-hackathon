@@ -6,6 +6,7 @@ import { Incident } from '../models/incident.model.js';
 import { Update } from '../models/update.model.js';
 import AppError from '../utils/appError.js';
 import { sendWorkspaceInvite } from '../services/mail.service.js';
+import { notifyWorkspace } from './notification.controller.js';
 import { config } from '../config/config.js';
 
 const generateInviteCode = () =>
@@ -78,7 +79,17 @@ export const joinWorkspace = async (req, res, next) => {
     req.user.role = 'member';
     await req.user.save();
 
-    return res.status(200).json({
+    // Notify admins/owners about the new member
+    notifyWorkspace({
+      actorId: req.user._id,
+      workspaceId: workspace._id,
+      type: 'workspace',
+      title: 'New Member Joined',
+      message: `${req.user.name} has joined the workspace`,
+      link: '/settings/team',
+    });
+
+    return res.status(200).json({ 
       message: 'Joined workspace successfully',
       workspace: {
         id: workspace._id,

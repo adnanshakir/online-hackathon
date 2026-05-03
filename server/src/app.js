@@ -7,6 +7,7 @@ import workspaceRoutes from './routes/workspace.routes.js';
 import serviceRoutes from './routes/service.routes.js';
 import statusRoutes from './routes/status.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 import errorHandler from './middlewares/error.middleware.js';
 import passport from './config/passport.js';
 import { globalLimiter } from './middlewares/rateLimit.middleware.js';
@@ -90,6 +91,7 @@ app.use('/api/workspace', workspaceRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/status', statusRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Central error handling
 app.use(errorHandler);
