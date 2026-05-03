@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Verify the connection configuration
-transporter.verify((error, success) => {
+transporter.verify((error) => {
   if (error) {
     logger.error('Error connecting to email server:', error);
   } else {
@@ -69,6 +69,39 @@ export const sendVerificationEmail = async (email, name, token) => {
     from: `"OpsWatch" <${config.MAIL_USER}>`,
     to: email,
     subject: 'Verify your email',
+    html,
+  });
+};
+
+export const sendWorkspaceInvite = async (
+  email,
+  inviterName,
+  workspaceName,
+  inviteCode,
+  inviteToken
+) => {
+  const joinLink = `${config.FRONTEND_URL}/join?token=${inviteToken}`;
+
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+      <h1 style="color: #333;">You're invited to join ${workspaceName} on OpsWatch</h1>
+      <p style="color: #666; font-size: 16px;">Hello! ${inviterName} has invited you to join their incident control room.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${joinLink}" 
+           style="background-color: #8b5cf6; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+           Join Workspace
+        </a>
+      </div>
+      <p style="color: #666; font-size: 14px;">This invitation was sent to <strong>${email}</strong>.</p>
+      <p style="color: #666; font-size: 14px;">Alternatively, you can use this invite code: <strong>${inviteCode}</strong></p>
+      <p style="color: #999; font-size: 12px;">Welcome to the team!</p>
+    </div>
+  `;
+
+  return await transporter.sendMail({
+    from: `"OpsWatch" <${config.MAIL_USER}>`,
+    to: email,
+    subject: `Invitation to join ${workspaceName} on OpsWatch`,
     html,
   });
 };

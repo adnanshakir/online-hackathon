@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Send, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,12 @@ import { cn } from '@/lib/utils';
 import * as api from '@/lib/api';
 import { toast } from 'sonner';
 
-export function AddUpdateForm({ incidentId, currentStatus, onTyping }) {
+export function AddUpdateForm({
+  incidentId,
+  currentStatus,
+  onTyping,
+  onSuccess,
+}) {
   const [message, setMessage] = useState('');
   const [statusChange, setStatusChange] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,6 +26,7 @@ export function AddUpdateForm({ incidentId, currentStatus, onTyping }) {
       await api.postUpdate(incidentId, { message, statusChange });
       setMessage('');
       setStatusChange(null);
+      onSuccess?.();
       toast.success('Update posted');
     } catch (err) {
       toast.error('Failed to post update', { description: err.message });
@@ -57,7 +62,9 @@ export function AddUpdateForm({ incidentId, currentStatus, onTyping }) {
             disabled={s === currentStatus && statusChange !== s}
             className={cn(
               'rounded-md px-1.5 py-0.5 transition-all',
-              statusChange === s ? 'ring-2 ring-[var(--color-ring)] ring-offset-1 ring-offset-[var(--color-surface)]' : '',
+              statusChange === s
+                ? 'ring-2 ring-[var(--color-ring)] ring-offset-1 ring-offset-[var(--color-surface)]'
+                : '',
               s === currentStatus && statusChange !== s && 'opacity-40'
             )}
           >
@@ -65,8 +72,17 @@ export function AddUpdateForm({ incidentId, currentStatus, onTyping }) {
           </button>
         ))}
         <div className="ml-auto">
-          <Button type="submit" variant="gradient" size="sm" disabled={submitting || !message.trim()}>
-            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+          <Button
+            type="submit"
+            variant="gradient"
+            size="sm"
+            disabled={submitting || !message.trim()}
+          >
+            {submitting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
             Post update
           </Button>
         </div>

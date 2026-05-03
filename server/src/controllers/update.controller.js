@@ -68,3 +68,30 @@ export const getUpdates = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const deleteUpdate = async (req, res, next) => {
+  try {
+    const update = await Update.findOne({
+      _id: req.params.updateId,
+      incident: req.params.id,
+      workspace: req.user.workspace,
+    });
+
+    if (!update) {
+      throw new AppError('Update not found', 404);
+    }
+
+    // Allow owner/admin or the author of the update
+    const isAuthor = update.createdBy.toString() === req.user._id.toString();
+
+    if (!['admin', 'owner'].includes(req.user.role) && !isAuthor) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    await update.deleteOne();
+
+    return res.status(200).json({ message: 'Update deleted successfully' });
+  } catch (error) {
+    return next(error);
+  }
+};

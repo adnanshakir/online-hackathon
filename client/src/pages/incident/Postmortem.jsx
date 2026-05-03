@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import {
   ArrowLeft,
   Sparkles,
@@ -30,7 +31,9 @@ import { getUserById } from '@/data/users';
 export default function Postmortem() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const incident = useIncidentsStore((s) => s.incidents.find((i) => i.id === id));
+  const incident = useIncidentsStore((s) =>
+    s.incidents.find((i) => i.id === id)
+  );
   const [pm, setPm] = useState(null);
   const [regenLoading, setRegenLoading] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
@@ -39,7 +42,14 @@ export default function Postmortem() {
     if (!incident) return;
     if (incident.postmortem) {
       const found = getPostmortem(incident.postmortem);
-      setPm(found ? { ...found, generatedAt: found.generatedAt || new Date().toISOString() } : null);
+      setPm(
+        found
+          ? {
+              ...found,
+              generatedAt: found.generatedAt || new Date().toISOString(),
+            }
+          : null
+      );
     } else {
       // For freshly resolved incidents, generate a stub on the fly
       setPm({
@@ -49,7 +59,9 @@ export default function Postmortem() {
         impact: {
           usersAffected: incident.affectedUsers || 0,
           durationMinutes: Math.round(
-            (new Date(incident.resolvedAt || Date.now()) - new Date(incident.createdAt)) / 60000
+            (new Date(incident.resolvedAt || Date.now()) -
+              new Date(incident.createdAt)) /
+              60000
           ),
           severity: incident.severity,
           services: incident.serviceIds,
@@ -60,14 +72,23 @@ export default function Postmortem() {
         })),
         rootCause:
           'Root cause analysis is in progress. The team identified contributing factors during triage and applied a mitigation; deeper investigation is ongoing.',
-        resolution: 'The mitigation reverted the impact within the response window.',
+        resolution:
+          'The mitigation reverted the impact within the response window.',
         actionItems: [
-          { description: 'Document detection and response timing', owner: '—', done: false },
-          { description: 'Add monitoring for the failure mode', owner: '—', done: false },
+          {
+            description: 'Document detection and response timing',
+            owner: '—',
+            done: false,
+          },
+          {
+            description: 'Add monitoring for the failure mode',
+            owner: '—',
+            done: false,
+          },
         ],
       });
     }
-  }, [incident?.id, incident?.postmortem]);
+  }, [incident]);
 
   const regenerate = async () => {
     setRegenLoading(true);
@@ -113,7 +134,7 @@ export default function Postmortem() {
   return (
     <>
       <ReadingProgress />
-      <motion.article
+      <Motion.article
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -129,11 +150,24 @@ export default function Postmortem() {
             <ArrowLeft className="h-4 w-4" /> Back to incident
           </Button>
           <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="sm" onClick={regenerate} disabled={regenLoading}>
-              {regenLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={regenerate}
+              disabled={regenLoading}
+            >
+              {regenLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
               Regenerate
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setEditingSection(editingSection ? null : 'all')}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditingSection(editingSection ? null : 'all')}
+            >
               <Pencil className="h-3.5 w-3.5" />
               {editingSection ? 'Done' : 'Edit'}
             </Button>
@@ -165,7 +199,10 @@ export default function Postmortem() {
           <div className="mt-4 flex items-center gap-2 flex-wrap">
             <SeverityBadge severity={incident.severity} />
             <span className="text-xs text-[var(--color-muted)]">
-              {formatDate(incident.createdAt)} → {incident.resolvedAt ? formatDate(incident.resolvedAt) : 'ongoing'}
+              {formatDate(incident.createdAt)} →{' '}
+              {incident.resolvedAt
+                ? formatDate(incident.resolvedAt)
+                : 'ongoing'}
             </span>
           </div>
         </header>
@@ -192,7 +229,9 @@ export default function Postmortem() {
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
               <AlertTriangle className="h-3 w-3" /> Severity
             </div>
-            <div className="mt-1.5 text-2xl font-semibold capitalize">{pm.impact.severity}</div>
+            <div className="mt-1.5 text-2xl font-semibold capitalize">
+              {pm.impact.severity}
+            </div>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
@@ -245,7 +284,9 @@ export default function Postmortem() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold tracking-tight">Action items</h2>
+            <h2 className="text-xl font-semibold tracking-tight">
+              Action items
+            </h2>
             <ul className="mt-3 space-y-2">
               {pm.actionItems.map((it, i) => (
                 <li
@@ -258,7 +299,9 @@ export default function Postmortem() {
                     <Circle className="h-4 w-4 shrink-0 text-[var(--color-muted)]" />
                   )}
                   <div className="flex-1">
-                    <div className={`text-sm ${it.done ? 'text-[var(--color-muted)] line-through' : ''}`}>
+                    <div
+                      className={`text-sm ${it.done ? 'text-[var(--color-muted)] line-through' : ''}`}
+                    >
                       {it.description}
                     </div>
                     <div className="mt-0.5 text-[11px] text-[var(--color-muted)]">
@@ -276,9 +319,12 @@ export default function Postmortem() {
           <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
             <span>Contributors:</span>
             <div className="flex -space-x-2">
-              {incident.assigneeIds.map(getUserById).filter(Boolean).map((u) => (
-                <Avatar key={u.id} user={u} size="xs" ring />
-              ))}
+              {incident.assigneeIds
+                .map(getUserById)
+                .filter(Boolean)
+                .map((u) => (
+                  <Avatar key={u.id} user={u} size="xs" ring />
+                ))}
             </div>
           </div>
           <Link
@@ -288,7 +334,7 @@ export default function Postmortem() {
             View incident →
           </Link>
         </footer>
-      </motion.article>
+      </Motion.article>
     </>
   );
 }

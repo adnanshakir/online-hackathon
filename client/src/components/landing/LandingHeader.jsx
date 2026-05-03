@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion, AnimatePresence } from 'motion/react';
+const Motion = _motion;
 import { Sun, Moon, Menu, X, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/shared/Logo';
@@ -117,7 +118,7 @@ export function LandingHeader() {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm md:hidden">
-            <motion.div
+            <Motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -198,7 +199,7 @@ export function LandingHeader() {
                   </>
                 )}
               </div>
-            </motion.div>
+            </Motion.div>
           </div>
         )}
       </AnimatePresence>

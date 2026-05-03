@@ -8,8 +8,8 @@ const buttonVariants = cva(
     'transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 ' +
     'focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 ' +
     'focus-visible:ring-offset-[var(--color-background)] ' +
-    'disabled:pointer-events-none disabled:opacity-50 ' +
-    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+    'disabled:pointer-events-none disabled:opacity-50 cursor-pointer ' +
+    '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -28,8 +28,7 @@ const buttonVariants = cva(
           'border border-[var(--color-border)] hover:brightness-110',
         destructive:
           'bg-red-500/90 text-white hover:bg-red-500 active:scale-[0.98]',
-        link:
-          'text-[var(--color-brand-violet)] underline-offset-4 hover:underline bg-transparent',
+        link: 'text-[var(--color-brand-violet)] underline-offset-4 hover:underline bg-transparent',
       },
       size: {
         default: 'h-10 px-4 py-2',
@@ -61,4 +60,5 @@ const Button = React.forwardRef(
 );
 Button.displayName = 'Button';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { Button, buttonVariants };

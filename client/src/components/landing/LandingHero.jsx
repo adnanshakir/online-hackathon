@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { APP_NAME } from '@/lib/constants';
@@ -59,7 +60,7 @@ export function LandingHero() {
       <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center md:gap-16">
         {/* Left — copy block */}
         <div className="text-center md:text-left">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -67,9 +68,9 @@ export function LandingHero() {
           >
             <span className="size-1.5 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
             <span className="truncate">Built for outages, not dashboards</span>
-          </motion.div>
+          </Motion.div>
 
-          <motion.h1
+          <Motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
@@ -79,9 +80,9 @@ export function LandingHero() {
             <span className="whitespace-nowrap text-[var(--color-brand-primary)]">
               resolved here.
             </span>{' '}
-          </motion.h1>
+          </Motion.h1>
 
-          <motion.p
+          <Motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -90,9 +91,9 @@ export function LandingHero() {
             {APP_NAME} is the workspace your on-call team opens when production
             breaks. Live timelines, smart role assignment, and AI briefs that
             turn 19-minute outages into one-click postmortems.
-          </motion.p>
+          </Motion.p>
 
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
@@ -116,9 +117,9 @@ export function LandingHero() {
             >
               See live demo <ArrowRight className="h-4 w-4" />
             </Button>
-          </motion.div>
+          </Motion.div>
 
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.45 }}
@@ -138,11 +139,11 @@ export function LandingHero() {
                 </div>
               </div>
             ))}
-          </motion.div>
+          </Motion.div>
         </div>
 
         {/* Right — workspace preview */}
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -152,7 +153,7 @@ export function LandingHero() {
           <div className="absolute -inset-6 -z-10 rounded-3xl bg-[var(--color-brand-primary)]/[0.07] blur-3xl animate-[pulse_4s_ease-in-out_infinite]" />
 
           <WorkspacePreview />
-        </motion.div>
+        </Motion.div>
       </div>
     </section>
   );

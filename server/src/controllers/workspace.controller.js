@@ -1,9 +1,12 @@
+import jwt from 'jsonwebtoken';
 import { Workspace } from '../models/workspace.model.js';
 import { User } from '../models/user.model.js';
 import { Service } from '../models/service.model.js';
 import { Incident } from '../models/incident.model.js';
 import { Update } from '../models/update.model.js';
 import AppError from '../utils/appError.js';
+import { sendWorkspaceInvite } from '../services/mail.service.js';
+import { config } from '../config/config.js';
 
 const generateInviteCode = () =>
   Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -37,20 +40,52 @@ export const createWorkspace = async (req, res, next) => {
 
 export const joinWorkspace = async (req, res, next) => {
   try {
-    const { inviteCode } = req.body;
+    const { inviteCode, token } = req.body;
 
     if (req.user.workspace) {
       throw new AppError('You are already a member of a workspace', 400);
     }
 
-    const workspace = await Workspace.findOne({ inviteCode });
+    let targetInviteCode = inviteCode;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
+        
+        // Ensure the invite is for the currently logged in user
+        if (decoded.email !== req.user.email) {
+          throw new AppError(
+            `This invitation was sent to ${decoded.email}, but you are logged in as ${req.user.email}. Please logout and use the correct account.`,
+            403
+          );
+        }
+        
+        targetInviteCode = decoded.inviteCode;
+      } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError('Invalid or expired invitation token', 400);
+      }
+    }
+
+    if (!targetInviteCode) {
+      throw new AppError('Invite code or token is required', 400);
+    }
+
+    const workspace = await Workspace.findOne({ inviteCode: targetInviteCode });
     if (!workspace) throw new AppError('Invalid invite code', 400);
 
     req.user.workspace = workspace._id;
     req.user.role = 'member';
     await req.user.save();
 
-    return res.status(200).json({ message: 'Joined workspace successfully' });
+    return res.status(200).json({ 
+      message: 'Joined workspace successfully',
+      workspace: {
+        id: workspace._id,
+        name: workspace.name,
+        slug: workspace.slug
+      }
+    });
   } catch (error) {
     return next(error);
   }
@@ -156,6 +191,42 @@ export const regenerateInviteCode = async (req, res, next) => {
     await workspace.save();
 
     return res.status(200).json({ inviteCode: workspace.inviteCode });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const inviteMember = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (req.user.role !== 'owner' && req.user.role !== 'admin') {
+      throw new AppError('Only owners and admins can invite members', 403);
+    }
+
+    const workspace = await Workspace.findById(req.user.workspace);
+    if (!workspace) throw new AppError('Workspace not found', 404);
+
+    // Generate a secure invite token tied to the email
+    const inviteToken = jwt.sign(
+      { 
+        email, 
+        workspaceId: workspace._id, 
+        inviteCode: workspace.inviteCode 
+      },
+      config.ACCESS_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    await sendWorkspaceInvite(
+      email,
+      req.user.name,
+      workspace.name,
+      workspace.inviteCode,
+      inviteToken
+    );
+
+    return res.status(200).json({ message: 'Invitation sent' });
   } catch (error) {
     return next(error);
   }

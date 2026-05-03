@@ -19,7 +19,7 @@ function persist(incidents) {
 const newId = (prefix = 'inc') =>
   `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
-export const useIncidentsStore = create((set, get) => ({
+export const useIncidentsStore = create((set) => ({
   incidents: loadInitial(),
 
   createIncident: ({
@@ -61,7 +61,10 @@ export const useIncidentsStore = create((set, get) => ({
     return incident;
   },
 
-  postUpdate: (incidentId, { authorId = 'u_demo', message, statusChange = null }) => {
+  postUpdate: (
+    incidentId,
+    { authorId = 'u_demo', message, statusChange = null }
+  ) => {
     const update = {
       id: newId('upd'),
       authorId,
@@ -90,7 +93,8 @@ export const useIncidentsStore = create((set, get) => ({
     set((state) => {
       const incidents = state.incidents.map((i) => {
         if (i.id !== incidentId) return i;
-        const resolvedAt = status === 'resolved' ? new Date().toISOString() : i.resolvedAt;
+        const resolvedAt =
+          status === 'resolved' ? new Date().toISOString() : i.resolvedAt;
         const update = {
           id: newId('upd'),
           authorId: 'u_demo',

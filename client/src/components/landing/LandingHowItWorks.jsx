@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as Motion } from 'motion/react';
 import { STEPS } from '@/data/landingData';
 import { fadeUp, stagger } from '@/components/motion/variants';
 
@@ -24,7 +24,7 @@ export function LandingHowItWorks() {
           </p>
         </div>
 
-        <motion.div
+        <Motion.div
           variants={stagger(0.05, 0.1)}
           initial="hidden"
           whileInView="visible"
@@ -32,7 +32,7 @@ export function LandingHowItWorks() {
           className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-border)] md:grid-cols-4"
         >
           {STEPS.map((s) => (
-            <motion.div
+            <Motion.div
               key={s.n}
               variants={fadeUp}
               className="bg-[var(--color-surface)] p-7 md:p-8"
@@ -46,9 +46,9 @@ export function LandingHowItWorks() {
               <p className="mt-2 text-[13px] leading-relaxed text-[var(--color-muted-strong)]">
                 {s.text}
               </p>
-            </motion.div>
+            </Motion.div>
           ))}
-        </motion.div>
+        </Motion.div>
       </div>
     </section>
   );

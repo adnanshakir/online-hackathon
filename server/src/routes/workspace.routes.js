@@ -10,6 +10,7 @@ import {
   regenerateInviteCode,
   deleteWorkspace,
   updateWorkspaceContext,
+  inviteMember,
 } from '../controllers/workspace.controller.js';
 import validate from '../middlewares/validate.middleware.js';
 import { systemContextSchema } from '../validators/workspace.validator.js';
@@ -74,6 +75,12 @@ router.patch(
   validate(systemContextSchema),
   updateWorkspaceContext
 );
+
+ /* @route POST /api/workspace/invite
+ * @desc Send email invite to a user (owner/admin only)
+ * @access Private
+ */
+router.post('/invite', requireWorkspace, inviteMember);
 
 /**
  * @route DELETE /api/workspace

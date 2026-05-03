@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import Lenis from 'lenis';
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 // Shared Components
 import { ScrollRevealParagraph } from '@/components/landing/ScrollReveal';
 import { DualMarquee } from '@/components/landing/DualMarquee';
@@ -68,7 +69,7 @@ export default function Landing() {
         {/* ─── AI BRIEF DEEP DIVE — The "Wow" Showcase ─────────── */}
         <section id="ai" className="relative px-6 py-40">
           <div className="mx-auto max-w-7xl text-center">
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -83,9 +84,9 @@ export default function Landing() {
                   Summarized in seconds.
                 </span>
               </h2>
-            </motion.div>
+            </Motion.div>
 
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-100px' }}
@@ -97,7 +98,7 @@ export default function Landing() {
               className="mt-20"
             >
               <CreativeAIBriefShowcase />
-            </motion.div>
+            </Motion.div>
           </div>
         </section>
 

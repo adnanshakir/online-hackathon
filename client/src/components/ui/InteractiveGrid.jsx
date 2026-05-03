@@ -10,13 +10,15 @@ export default function InteractiveGrid({ cellSize = 48 }) {
     if (!container) return;
 
     const ctx = canvas.getContext('2d');
-    
+
     // tuneable constants
     const CELL = cellSize;
     const GLOW_DURATION = 2200;
     const FADE_DURATION = 1800;
 
-    let cols, rows, cells = [];
+    let cols,
+      rows,
+      cells = [];
     let animationFrameId;
 
     function resize() {
@@ -32,12 +34,14 @@ export default function InteractiveGrid({ cellSize = 48 }) {
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const key = `${r}_${c}`;
-          cells.push(prev[key] || {
-            key,
-            x: c * CELL,
-            y: r * CELL,
-            litAt: null,
-          });
+          cells.push(
+            prev[key] || {
+              key,
+              x: c * CELL,
+              y: r * CELL,
+              litAt: null,
+            }
+          );
         }
       }
     }
@@ -54,21 +58,17 @@ export default function InteractiveGrid({ cellSize = 48 }) {
       if (cell) cell.litAt = performance.now();
     }
 
-    let lastMx = -1, lastMy = -1;
+    let lastMx = -1,
+      lastMy = -1;
     function onMove(px, py) {
       if (Math.abs(px - lastMx) < 2 && Math.abs(py - lastMy) < 2) return;
-      lastMx = px; lastMy = py;
+      lastMx = px;
+      lastMy = py;
       light(px, py);
     }
 
-    function toCanvas(e) {
-      const r = canvas.getBoundingClientRect();
-      const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? -1;
-      const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? -1;
-      return [clientX - r.left, clientY - r.top];
-    }
-
-    let viewportX = -1, viewportY = -1;
+    let viewportX = -1,
+      viewportY = -1;
 
     const handleMouseMove = (e) => {
       viewportX = e.clientX;
@@ -84,12 +84,14 @@ export default function InteractiveGrid({ cellSize = 48 }) {
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('resize', resize);
 
-    function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+    function easeOut(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
 
     let sweepT = 0;
     function draw() {
       const now = performance.now();
-      
+
       // Interaction tracking
       const r = canvas.getBoundingClientRect();
       const isVisible = r.top < window.innerHeight && r.bottom > 0;
@@ -128,7 +130,10 @@ export default function InteractiveGrid({ cellSize = 48 }) {
           brightness = t < 0.08 ? easeOut(t / 0.08) : 1;
         } else {
           const fadeT = (elapsed - GLOW_DURATION) / FADE_DURATION;
-          if (fadeT >= 1) { cell.litAt = null; continue; }
+          if (fadeT >= 1) {
+            cell.litAt = null;
+            continue;
+          }
           brightness = 1 - easeOut(fadeT);
         }
 

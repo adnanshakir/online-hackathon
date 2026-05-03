@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion, AnimatePresence } from 'motion/react';
+const Motion = _motion;
 import { Plus, Search, Filter, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,7 +69,7 @@ export default function IncidentsList() {
   );
 
   return (
-    <motion.div
+    <Motion.div
       variants={fadeUp}
       initial="hidden"
       animate="visible"
@@ -153,12 +154,12 @@ export default function IncidentsList() {
 
       {loading ? (
         <div className="flex h-64 flex-col items-center justify-center gap-3">
-          <motion.div
+          <Motion.div
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
           >
             <Loader2 className="h-8 w-8 text-[var(--color-brand-primary)]" />
-          </motion.div>
+          </Motion.div>
           <p className="text-sm text-[var(--color-muted)]">
             Syncing with HQ...
           </p>
@@ -166,6 +167,6 @@ export default function IncidentsList() {
       ) : (
         <IncidentsTable incidents={filtered} />
       )}
-    </motion.div>
+    </Motion.div>
   );
 }

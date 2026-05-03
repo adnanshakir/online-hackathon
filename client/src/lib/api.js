@@ -260,7 +260,9 @@ export async function getService(id) {
  * Toggles service health: operational | degraded | down | maintenance.
  */
 export async function updateServiceStatus(serviceId, status) {
-  const { data } = await http.patch(`/services/${serviceId}/status`, { status });
+  const { data } = await http.patch(`/services/${serviceId}/status`, {
+    status,
+  });
   return data;
 }
 
@@ -315,10 +317,23 @@ export async function postUpdate(incidentId, update) {
   return toUpdate(data);
 }
 
-/* ────────── Users / Team (still mock — no GET /users yet) ────────── */
+/* ────────── Users / Team ────────── */
 
 export async function listUsers() {
-  return USERS;
+  if (isDemoMode()) return USERS;
+  try {
+    const { data } = await http.get('/workspace/users');
+    // Backend returns array of { _id, name, email, role, avatar }
+    return (data || []).map((u) => ({
+      id: u._id || u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      avatar: u.avatar || null,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getUser(id) {
@@ -378,12 +393,24 @@ export async function joinWorkspace({ inviteCode }) {
 export const workspace = {
   create: createWorkspace,
   join: joinWorkspace,
+  invite: (payload) => http.post('/workspace/invite', payload),
+  listUsers: () => http.get('/workspace/users').then((res) => res.data),
+  updateRole: (payload) => http.patch('/workspace/role', payload),
+  getMe: () => http.get('/workspace/me').then((res) => res.data),
+  regenerateInviteCode: () =>
+    http.patch('/workspace/invite-code').then((res) => res.data),
+  delete: () => http.delete('/workspace').then((res) => res.data),
 };
 export const services = {
   list: listServices,
   get: getService,
   create: createService,
 };
+
+export async function deleteService(id) {
+  const { data } = await http.delete(`/services/${id}`);
+  return data;
+}
 
 /* ────────── AI ──────────
  * Backend has Mistral → Gemini failover. The summary endpoint returns a
@@ -513,7 +540,7 @@ export async function me() {
     const user = toUser(data.user || data);
     useAuthStore.getState().setUser(user);
     return user;
-  } catch (error) {
+  } catch {
     // If session is invalid or endpoint fails, clear local state
     useAuthStore.getState().setUser(null);
     return null;

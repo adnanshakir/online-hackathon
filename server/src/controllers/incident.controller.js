@@ -160,19 +160,17 @@ export const assignUsers = async (req, res, next) => {
     }
 
     if (Array.isArray(req.body.assignedTo)) {
-      // Validate that all user IDs exist in the database
-      const validUsersCount = await User.countDocuments({
-        _id: { $in: req.body.assignedTo },
+      // Filter out invalid IDs (like mock UI IDs) and find real users
+      const potentialIds = req.body.assignedTo.filter((id) =>
+        /^[0-9a-fA-F]{24}$/.test(id)
+      );
+
+      const validUsers = await User.find({
+        _id: { $in: potentialIds },
       });
 
-      if (validUsersCount !== req.body.assignedTo.length) {
-        throw new AppError(
-          'One or more User IDs are invalid or do not exist',
-          400
-        );
-      }
-
-      incident.assignedTo = req.body.assignedTo;
+      // Assign only the IDs that actually exist in our DB
+      incident.assignedTo = validUsers.map((u) => u._id);
     }
 
     await incident.save();
@@ -211,6 +209,117 @@ export const getIncidentById = async (req, res, next) => {
     }
 
     return res.status(200).json(incident);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateIncident = async (req, res, next) => {
+  try {
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    });
+
+    if (!incident) {
+      throw new AppError('Incident not found', 404);
+    }
+
+    // Check access: owner/admin or assigned
+    const isAssigned = incident.assignedTo.some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+
+    if (!['admin', 'owner'].includes(req.user.role) && !isAssigned) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    // Validate new service if provided
+    if (req.body.service) {
+      const service = await Service.findOne({
+        _id: req.body.service,
+        workspace: req.user.workspace,
+      });
+
+      if (!service) {
+        throw new AppError('Invalid service selected for this workspace', 400);
+      }
+    }
+
+    const allowed = ['title', 'description', 'severity', 'service'];
+
+    const hasValidField = Object.keys(req.body).some((key) =>
+      allowed.includes(key)
+    );
+
+    if (!hasValidField) {
+      throw new AppError('No valid fields provided for update', 400);
+    }
+
+    let updated = false;
+
+    allowed.forEach((field) => {
+      if (
+        req.body[field] !== undefined &&
+        req.body[field] !== incident[field]
+      ) {
+        incident[field] = req.body[field];
+        updated = true;
+      }
+    });
+
+    if (!updated) {
+      throw new AppError('No changes applied', 400);
+    }
+
+    await incident.save();
+
+    // Log update only if something changed
+    await Update.create({
+      incident: incident._id,
+      workspace: req.user.workspace,
+      message: 'Incident updated',
+      type: 'log',
+      createdBy: req.user._id,
+    });
+
+    await incident.populate([
+      { path: 'createdBy', select: 'name email' },
+      { path: 'assignedTo', select: 'name email' },
+      { path: 'service', select: 'name type techStack environment' },
+    ]);
+
+    return res.status(200).json(incident);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const deleteIncident = async (req, res, next) => {
+  try {
+    // Only owner/admin may delete
+    if (!['admin', 'owner'].includes(req.user.role)) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    const incident = await Incident.findOne({
+      _id: req.params.id,
+      workspace: req.user.workspace,
+    });
+
+    if (!incident) {
+      throw new AppError('Incident not found', 404);
+    }
+
+    await Promise.all([
+      Update.deleteMany({
+        incident: incident._id,
+        workspace: req.user.workspace,
+      }),
+      incident.deleteOne(),
+    ]);
+
+    return res.status(200).json({ message: 'Incident deleted successfully' });
   } catch (error) {
     return next(error);
   }

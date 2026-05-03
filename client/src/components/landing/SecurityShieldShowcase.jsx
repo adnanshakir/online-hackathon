@@ -1,24 +1,25 @@
 import React from 'react';
-import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { motion as _motion } from 'framer-motion';
+const Motion = _motion;
 
 const SecurityShieldShowcase = () => {
   return (
     <div className="relative flex h-48 w-full items-center justify-center py-4 md:h-64 group select-none">
       {/* Background radial glow */}
-      <motion.div
+      <Motion.div
         animate={{
           opacity: [0.15, 0.3, 0.15],
           scale: [1, 1.2, 1],
         }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-brand-primary)]/20 blur-[60px]"
       />
 
-      <svg 
-        width="160" 
-        height="200" 
-        viewBox="0 0 150 180" 
-        fill="none" 
+      <svg
+        width="160"
+        height="200"
+        viewBox="0 0 150 180"
+        fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="relative z-10 transition-transform duration-500 group-hover:scale-105"
       >
@@ -41,7 +42,7 @@ const SecurityShieldShowcase = () => {
         </defs>
 
         {/* Outer Shield Shell */}
-        <motion.path
+        <Motion.path
           d="M75 10L140 40V95C140 135 110 165 75 175C40 165 10 135 10 95V40L75 10Z"
           className="stroke-[var(--color-brand-primary)]/30"
           strokeWidth="3"
@@ -52,7 +53,7 @@ const SecurityShieldShowcase = () => {
         />
 
         {/* Inner Shield Body */}
-        <motion.path
+        <Motion.path
           d="M75 18L130 43V90C130 128 105 155 75 165C45 155 20 128 20 90V43L75 18Z"
           fill="url(#shieldGradient)"
           className="stroke-[var(--color-brand-primary)]/10"
@@ -64,7 +65,7 @@ const SecurityShieldShowcase = () => {
         />
 
         {/* Lock Icon */}
-        <motion.g
+        <Motion.g
           initial={{ opacity: 0, scale: 0.5 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
@@ -111,12 +112,12 @@ const SecurityShieldShowcase = () => {
             rx="1.5"
             fill="var(--color-brand-primary)"
           />
-        </motion.g>
+        </Motion.g>
       </svg>
 
       {/* Floating tech debris / particles (subtle) */}
       {[...Array(4)].map((_, i) => (
-        <motion.div
+        <Motion.div
           key={i}
           className="absolute h-px w-3 bg-[var(--color-brand-primary)]/20"
           initial={{
@@ -140,7 +141,7 @@ const SecurityShieldShowcase = () => {
       ))}
 
       {/* Integrity Badge */}
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -151,7 +152,7 @@ const SecurityShieldShowcase = () => {
         <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]/80">
           Encrypted
         </span>
-      </motion.div>
+      </Motion.div>
     </div>
   );
 };

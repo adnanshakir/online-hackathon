@@ -3,8 +3,9 @@ import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/shared/Avatar';
 import { getUserById } from '@/data/users';
 
-export function RespondersCard({ assigneeIds = [], onAdd }) {
-  const responders = assigneeIds.map(getUserById).filter(Boolean);
+export function RespondersCard({ users = [], assigneeIds = [], onAdd }) {
+  const responders =
+    users.length > 0 ? users : assigneeIds.map(getUserById).filter(Boolean);
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between">
@@ -27,7 +28,9 @@ export function RespondersCard({ assigneeIds = [], onAdd }) {
             <Avatar user={u} size="sm" online={u.online} />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium truncate">{u.name}</div>
-              <div className="text-[11px] text-[var(--color-muted)] truncate">{u.role}</div>
+              <div className="text-[11px] text-[var(--color-muted)] truncate">
+                {u.role}
+              </div>
             </div>
           </li>
         ))}

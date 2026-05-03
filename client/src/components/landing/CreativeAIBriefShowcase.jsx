@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as Motion } from 'motion/react';
 import { Sparkles, Target, AlertTriangle } from 'lucide-react';
 
 export function CreativeAIBriefShowcase() {
@@ -43,7 +43,7 @@ export function CreativeAIBriefShowcase() {
             'radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), black, transparent)',
         }}
       />
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, x: -40, rotate: -12 }}
         whileInView={{ opacity: 1, x: 0, rotate: -8 }}
         viewport={{ once: true }}
@@ -59,9 +59,9 @@ export function CreativeAIBriefShowcase() {
           alt="Mistral AI"
           className="h-32 w-32 object-contain transition-transform duration-500 hover:scale-110"
         />
-      </motion.div>
+      </Motion.div>
 
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, x: 40, rotate: 12 }}
         whileInView={{ opacity: 1, x: 0, rotate: 15 }}
         viewport={{ once: true }}
@@ -82,11 +82,11 @@ export function CreativeAIBriefShowcase() {
           alt="Gemini AI"
           className="h-32 w-32 object-contain transition-transform duration-500 hover:scale-110"
         />
-      </motion.div>
+      </Motion.div>
 
       {/* The Central Generative Text Block */}
       <div className="relative z-10 max-w-4xl px-10 text-center">
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -95,13 +95,13 @@ export function CreativeAIBriefShowcase() {
         >
           <Sparkles className="mr-2 inline-block h-3.5 w-3.5 text-[var(--color-brand-primary)]" />
           Live AI Analysis
-        </motion.div>
+        </Motion.div>
 
         <div className="text-[17px] sm:text-[24px] md:text-[36px] font-medium leading-[2.2] md:leading-[1.7] tracking-tight text-[var(--color-foreground)]/70">
           A 19-minute outage on the checkout API was triggered by a{' '}
           <span className="relative inline-block whitespace-nowrap">
             {/* The Text that gets highlighted */}
-            <motion.span
+            <Motion.span
               initial={{ color: 'var(--color-muted)' }}
               whileInView={{ color: 'var(--color-brand-primary)' }}
               viewport={{ once: true }}
@@ -109,10 +109,10 @@ export function CreativeAIBriefShowcase() {
               className="relative z-10 transition-colors"
             >
               saturated webhook queue
-            </motion.span>
+            </Motion.span>
 
             {/* The Annotation Node (Root Cause) */}
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -129,7 +129,7 @@ export function CreativeAIBriefShowcase() {
               </div>
               {/* Connecting Line */}
               <div className="mt-2 h-10 md:h-8 w-px bg-gradient-to-b from-[var(--color-brand-primary)]/60 to-transparent transition-all duration-300 group-hover:from-[var(--color-brand-primary)]/100" />
-            </motion.div>
+            </Motion.div>
           </span>{' '}
           following the{' '}
           <span className="relative inline-block">
@@ -138,7 +138,7 @@ export function CreativeAIBriefShowcase() {
             </code>
 
             {/* The Annotation Node (Action) */}
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, y: -15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -155,7 +155,7 @@ export function CreativeAIBriefShowcase() {
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Suggested: Roll back
               </div>
-            </motion.div>
+            </Motion.div>
           </span>{' '}
           deployment. Mitigation succeeded; zero customer reports filed.
         </div>

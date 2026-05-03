@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +53,7 @@ export default function Login() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       {/* Left: form */}
-      <motion.div
+      <Motion.div
         variants={fadeUp}
         initial="hidden"
         animate="visible"
@@ -174,7 +175,7 @@ export default function Login() {
             </p>
           </form>
         </div>
-      </motion.div>
+      </Motion.div>
 
       {/* Right: clean panel + mini incident preview */}
       <div className="relative hidden overflow-hidden border-l border-[var(--color-border)] lg:block">
@@ -190,7 +191,7 @@ export default function Login() {
         />
 
         <div className="relative grid h-full place-items-center p-10 xl:p-16">
-          <motion.div
+          <Motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
@@ -211,7 +212,7 @@ export default function Login() {
             </p>
 
             <AuthIncidentPreview className="mt-8" />
-          </motion.div>
+          </Motion.div>
         </div>
       </div>
     </div>

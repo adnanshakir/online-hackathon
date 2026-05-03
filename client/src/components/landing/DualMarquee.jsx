@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion, useScroll, useTransform } from 'motion/react';
+const Motion = _motion;
 
 export function DualMarquee() {
   const ref = useRef(null);
@@ -28,7 +29,7 @@ export function DualMarquee() {
     >
       {/* Background Banner - Tilted Up, Scrolling Right */}
       <div className="absolute left-1/2 z-0 hidden w-[200vw] -translate-x-1/2 -rotate-[3deg] border-y border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] py-3 shadow-[0_0_40px_rgba(0,0,0,0.5)] md:flex md:py-4">
-        <motion.div style={{ x: x1 }} className="flex whitespace-nowrap">
+        <Motion.div style={{ x: x1 }} className="flex whitespace-nowrap">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex items-center">
               {items.map((item, j) => (
@@ -41,12 +42,12 @@ export function DualMarquee() {
               ))}
             </div>
           ))}
-        </motion.div>
+        </Motion.div>
       </div>
 
       {/* Foreground Banner - Tilted Down, Scrolling Left */}
       <div className="absolute left-1/2 z-10 flex w-[200vw] -translate-x-1/2 rotate-0 bg-[var(--color-brand-primary)] py-3 shadow-[0_0_40px_rgba(0,0,0,0.5)] md:rotate-[2deg] md:py-4">
-        <motion.div style={{ x: x2 }} className="flex whitespace-nowrap">
+        <Motion.div style={{ x: x2 }} className="flex whitespace-nowrap">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex items-center">
               {items.map((item, j) => (
@@ -59,7 +60,7 @@ export function DualMarquee() {
               ))}
             </div>
           ))}
-        </motion.div>
+        </Motion.div>
       </div>
     </div>
   );

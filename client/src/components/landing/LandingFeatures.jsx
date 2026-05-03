@@ -1,4 +1,5 @@
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import {
   Sparkles,
   Activity,
@@ -29,7 +30,7 @@ export function LandingFeatures() {
 
         <SpotlightGrid className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* AI Brief — large hero card */}
-          <motion.div variants={fadeUp} className="sm:col-span-2 lg:row-span-2">
+          <Motion.div variants={fadeUp} className="sm:col-span-2 lg:row-span-2">
             <div className="spotlight-card relative h-full overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 dark:border-white/10 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
               <div className="flex items-center gap-2 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -66,9 +67,9 @@ export function LandingFeatures() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </Motion.div>
 
-          <motion.div variants={fadeUp}>
+          <Motion.div variants={fadeUp}>
             <div className="spotlight-card h-full rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-7 dark:border-white/10 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
               <Activity className="h-5 w-5 text-[var(--color-brand-primary)]" />
               <h3 className="mt-5 text-xl font-semibold tracking-[-0.02em]">
@@ -79,9 +80,9 @@ export function LandingFeatures() {
                 feed.
               </p>
             </div>
-          </motion.div>
+          </Motion.div>
 
-          <motion.div variants={fadeUp}>
+          <Motion.div variants={fadeUp}>
             <div className="spotlight-card h-full rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-7 dark:border-white/10 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
               <Globe className="h-5 w-5 text-[var(--color-brand-primary)]" />
               <h3 className="mt-5 text-xl font-semibold tracking-[-0.02em]">
@@ -92,7 +93,7 @@ export function LandingFeatures() {
                 email subscriptions.
               </p>
             </div>
-          </motion.div>
+          </Motion.div>
         </SpotlightGrid>
 
         <SpotlightGrid className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -113,7 +114,7 @@ export function LandingFeatures() {
               text: 'Cookie sessions, refresh tokens, isolated team workspaces.',
             },
           ].map((f) => (
-            <motion.div
+            <Motion.div
               key={f.title}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -129,7 +130,7 @@ export function LandingFeatures() {
                   {f.text}
                 </p>
               </div>
-            </motion.div>
+            </Motion.div>
           ))}
         </SpotlightGrid>
       </div>

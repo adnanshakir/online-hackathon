@@ -185,6 +185,11 @@
     background: oklch(86.05% 0.1808 143.81 / 0.35);
     color: oklch(16.5% 0.02 143.81);
   }
+
+  button, 
+  [role="button"] {
+    cursor: pointer;
+  }
 }
 
 @layer utilities {

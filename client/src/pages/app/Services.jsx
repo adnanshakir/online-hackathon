@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import {
   Server,
   Plus,
@@ -11,6 +12,7 @@ import {
   Loader2,
   Globe,
   ExternalLink,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -88,6 +90,8 @@ export default function Services() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -129,8 +133,28 @@ export default function Services() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await api.deleteService(id);
+      setServices((s) => s.filter((svc) => svc._id !== id));
+      toast.success('Service deleted');
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || err.message || 'Could not delete service'
+      );
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
+
   return (
-    <motion.div
+    <Motion.div
       variants={fadeUp}
       initial="hidden"
       animate="visible"
@@ -177,7 +201,7 @@ export default function Services() {
               className="rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-5"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="truncate text-base font-semibold tracking-tight">
                     {svc.name}
                   </h3>
@@ -196,17 +220,41 @@ export default function Services() {
                     </span>
                   </div>
                 </div>
-                {svc.liveUrl && (
-                  <a
-                    href={svc.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand-primary)]"
-                    title={svc.liveUrl}
+                <div className="flex shrink-0 items-center gap-2">
+                  {svc.liveUrl && (
+                    <a
+                      href={svc.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--color-muted)] transition-colors hover:text-[var(--color-brand-primary)]"
+                      title={svc.liveUrl}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(svc._id)}
+                    disabled={deletingId === svc._id}
+                    title={
+                      confirmDeleteId === svc._id
+                        ? 'Click again to confirm'
+                        : 'Delete service'
+                    }
+                    className={cn(
+                      'rounded-md p-1.5 transition-all',
+                      confirmDeleteId === svc._id
+                        ? 'bg-red-500/15 text-red-400 hover:bg-red-500/25'
+                        : 'text-[var(--color-muted)] hover:bg-[var(--color-surface-elevated)] hover:text-red-400'
+                    )}
                   >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+                    {deletingId === svc._id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {svc.description && (
@@ -259,6 +307,6 @@ export default function Services() {
           ))}
         </div>
       )}
-    </motion.div>
+    </Motion.div>
   );
 }

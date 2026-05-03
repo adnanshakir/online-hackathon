@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react'; // eslint-disable-line no-unused-vars
-import { Sparkles, Loader2, Check } from 'lucide-react';
+import { motion as _motion, AnimatePresence } from 'motion/react';
+const Motion = _motion;
+import { Sparkles, Loader2, Check, Wand2, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -17,50 +18,91 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar } from '@/components/shared/Avatar';
 import { SEVERITY } from '@/lib/constants';
-import { USERS } from '@/data/users';
 import { cn } from '@/lib/utils';
-import { suggestCauses } from '@/lib/ai';
+import { suggestCauses, polishDescription } from '@/lib/ai';
 import * as api from '@/lib/api';
 
 export function NewIncidentDialog({ open, onOpenChange }) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [prevDescription, setPrevDescription] = useState(null); // for undo
   const [severity, setSeverity] = useState('high');
   const [selectedService, setSelectedService] = useState(null);
   const [availableServices, setAvailableServices] = useState([]);
+  const [workspaceUsers, setWorkspaceUsers] = useState([]);
   const [responders, setResponders] = useState([]);
   const [suggestions, setSuggestions] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [polishing, setPolishing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const reset = () => {
     setTitle('');
     setDescription('');
+    setPrevDescription(null);
     setSeverity('high');
     setSelectedService(null);
     setResponders([]);
     setSuggestions(null);
     setAiLoading(false);
+    setPolishing(false);
   };
 
-  const fetchServices = async () => {
+  const fetchData = async () => {
     try {
-      const data = await api.listServices();
-      setAvailableServices(data);
+      const [services, users] = await Promise.all([
+        api.listServices(),
+        api.listUsers(),
+      ]);
+      setAvailableServices(services);
+      setWorkspaceUsers(users);
     } catch (err) {
-      console.error('Failed to load services:', err);
+      console.error('Failed to load dialog data:', err);
     }
   };
 
   useEffect(() => {
-    if (open) fetchServices();
+    if (open) fetchData();
   }, [open]);
 
   const toggle = (arr, setArr, id) => {
     setArr(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
   };
 
+  /* ── AI: polish description ── */
+  const handlePolish = async () => {
+    if (!description.trim()) {
+      toast.error('Write a description first.');
+      return;
+    }
+    setPolishing(true);
+    try {
+      const { polished, source } = await polishDescription(title, description);
+      setPrevDescription(description); // save for undo
+      setDescription(polished);
+      toast.success('Description polished', {
+        description:
+          source === 'gemini' ? 'Powered by Gemini' : 'AI-enhanced locally',
+      });
+    } catch (err) {
+      toast.error('Could not polish description.', {
+        description: err.message,
+      });
+    } finally {
+      setPolishing(false);
+    }
+  };
+
+  const handleUndo = () => {
+    if (prevDescription !== null) {
+      setDescription(prevDescription);
+      setPrevDescription(null);
+      toast.info('Description restored.');
+    }
+  };
+
+  /* ── AI: root cause suggestions ── */
   const handleAI = async () => {
     if (!title.trim() && !description.trim()) {
       toast.error('Add a title or description first.');
@@ -145,15 +187,73 @@ export function NewIncidentDialog({ open, onOpenChange }) {
             />
           </div>
 
-          {/* Description */}
+          {/* Description + AI Polish */}
           <div className="space-y-2">
-            <Label>What's happening</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Symptoms, scope, and any signals you've noticed so far…"
-              rows={3}
-            />
+            <div className="flex items-center justify-between">
+              <Label>What's happening</Label>
+              <div className="flex items-center gap-1.5">
+                {prevDescription !== null && (
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    title="Undo AI polish"
+                    className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-elevated)] hover:text-[var(--color-foreground)]"
+                  >
+                    <Undo2 className="h-3 w-3" />
+                    Undo
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handlePolish}
+                  disabled={polishing || !description.trim()}
+                  title="Polish description with AI"
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-all',
+                    'border border-[var(--color-border)] bg-[var(--color-surface)]',
+                    'hover:border-violet-500/50 hover:text-violet-400',
+                    'disabled:cursor-not-allowed disabled:opacity-40'
+                  )}
+                >
+                  {polishing ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-3 w-3" />
+                  )}
+                  {polishing ? 'Polishing…' : 'AI Polish'}
+                </button>
+              </div>
+            </div>
+
+            <div className="relative">
+              <Textarea
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  // Clear undo state when user manually edits
+                  if (prevDescription !== null) setPrevDescription(null);
+                }}
+                placeholder="Symptoms, scope, and any signals you've noticed so far…"
+                rows={3}
+                className={cn('transition-all', polishing && 'opacity-60')}
+              />
+              <AnimatePresence>
+                {polishing && (
+                  <Motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center rounded-lg"
+                    style={{ background: 'rgba(139,92,246,0.06)' }}
+                  >
+                    <div className="flex items-center gap-2 rounded-full border border-violet-500/30 bg-[var(--color-surface)] px-3 py-1.5 text-xs text-violet-400">
+                      <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                      Polishing your description…
+                    </div>
+                  </Motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Severity — visual cards */}
@@ -180,7 +280,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                       <Icon className="h-4 w-4" style={{ color: s.color }} />
                       <AnimatePresence>
                         {active && (
-                          <motion.span
+                          <Motion.span
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
@@ -188,7 +288,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                             style={{ background: s.color }}
                           >
                             <Check className="h-2.5 w-2.5 text-white" />
-                          </motion.span>
+                          </Motion.span>
                         )}
                       </AnimatePresence>
                     </div>
@@ -238,33 +338,49 @@ export function NewIncidentDialog({ open, onOpenChange }) {
             )}
           </div>
 
-          {/* Responders */}
+          {/* Responders — real workspace users */}
           <div className="space-y-2">
             <Label>Responders</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {USERS.map((u) => {
-                const active = responders.includes(u.id);
-                return (
-                  <button
-                    key={u.id}
-                    type="button"
-                    onClick={() => toggle(responders, setResponders, u.id)}
-                    className={cn(
-                      'flex items-center gap-2 rounded-full border px-2 py-1 text-xs transition-all',
-                      active
-                        ? 'border-[var(--color-brand-violet)] bg-[var(--color-brand-violet)]/10 text-[var(--color-foreground)]'
-                        : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-muted)]'
-                    )}
-                  >
-                    <Avatar user={u} size="xs" />
-                    <span className="pr-1">{u.name.split(' ')[0]}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {workspaceUsers.length === 0 ? (
+              <p className="text-[11px] text-[var(--color-muted)]">
+                No team members found.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {workspaceUsers.map((u) => {
+                  const active = responders.includes(u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => toggle(responders, setResponders, u.id)}
+                      className={cn(
+                        'flex items-center gap-2 rounded-full border px-2 py-1 text-xs transition-all',
+                        active
+                          ? 'border-[var(--color-brand-violet)] bg-[var(--color-brand-violet)]/10 text-[var(--color-foreground)]'
+                          : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:border-[var(--color-muted)]'
+                      )}
+                    >
+                      <Avatar user={u} size="xs" />
+                      <span className="pr-1">{u.name.split(' ')[0]}</span>
+                      {u.role === 'owner' && (
+                        <span className="rounded-sm bg-amber-500/20 px-1 py-px text-[9px] font-bold uppercase text-amber-500">
+                          Owner
+                        </span>
+                      )}
+                      {u.role === 'admin' && (
+                        <span className="rounded-sm bg-violet-500/20 px-1 py-px text-[9px] font-bold uppercase text-violet-400">
+                          Admin
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* AI suggestions */}
+          {/* AI cause analysis */}
           <div
             className="rounded-xl border border-[var(--color-border)] p-4"
             style={{
@@ -304,7 +420,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
 
             <AnimatePresence>
               {suggestions && (
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
@@ -312,7 +428,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                   className="mt-3 space-y-2 overflow-hidden"
                 >
                   {suggestions.map((s, i) => (
-                    <motion.div
+                    <Motion.div
                       key={i}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -340,9 +456,9 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                           ))}
                         </div>
                       )}
-                    </motion.div>
+                    </Motion.div>
                   ))}
-                </motion.div>
+                </Motion.div>
               )}
             </AnimatePresence>
           </div>

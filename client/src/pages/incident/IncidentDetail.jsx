@@ -1,7 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { ArrowLeft, MoreHorizontal, Radio, Pencil } from 'lucide-react';
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
+import {
+  ArrowLeft,
+  MoreHorizontal,
+  Radio,
+  Pencil,
+  Loader2,
+  Server,
+  ExternalLink,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,181 +27,195 @@ import { ActionsCard } from '@/components/incidents/ActionsCard';
 import { AIBriefCard } from '@/components/incidents/AIBriefCard';
 import { LiveViewers } from '@/components/incidents/LiveViewers';
 import { TypingIndicator } from '@/components/incidents/TypingIndicator';
-import { useIncidentsStore } from '@/store/incidentsStore';
 import * as api from '@/lib/api';
 import { fadeUp } from '@/components/motion/variants';
 import { USERS } from '@/data/users';
 
-const SIM_MESSAGES = [
-  'Pulling fresh traces from the gateway — back in a second.',
-  'Cross-checking against the deploy timeline. One PR landed 12 min before alert.',
-  'Reproduced internally. Will share findings once I have a cleaner repro.',
-  'Comparing against the last clean run — diff is small but suspicious.',
-  'Filed a follow-up to harden monitoring on this code path.',
-];
-
 export default function IncidentDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const incident = useIncidentsStore((s) => s.incidents.find((i) => i.id === id));
+
+  const [incident, setIncident] = useState(null);
+  const [updates, setUpdates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
   const [typing, setTyping] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
 
-  // Title inline edit
+  const fetchData = useCallback(async () => {
+    try {
+      const [incidentData, updatesData] = await Promise.all([
+        api.getIncident(id),
+        api.getTimeline(id),
+      ]);
+      setIncident(incidentData);
+      setUpdates(updatesData);
+      setTitleDraft(incidentData.title);
+    } catch (_err) {
+      console.error('Failed to fetch incident data:', _err);
+      toast.error('Could not load incident details');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
-    if (incident) setTitleDraft(incident.title);
-  }, [incident?.title]);
+    fetchData();
+  }, [fetchData]);
 
-  // Show "X is typing" when *we* type — pseudo-collab feel
-  const showTyping = typing && incident?.status !== 'resolved';
-
-  // Demo mode: a fake teammate posts an update every 30s
+  // Refresh every 30s for "live" feel
   useEffect(() => {
-    if (!demoMode || !incident || incident.status === 'resolved') return;
-    const id1 = setInterval(async () => {
-      const author = USERS[Math.floor(Math.random() * USERS.length)];
-      const message = SIM_MESSAGES[Math.floor(Math.random() * SIM_MESSAGES.length)];
-      await api.postUpdate(incident.id, { authorId: author.id, message });
-      toast.success('New update', { description: `${author.name.split(' ')[0]}: ${message.slice(0, 48)}…` });
-    }, 30_000);
-    return () => clearInterval(id1);
-  }, [demoMode, incident?.id, incident?.status]);
+    if (!incident || incident.status === 'resolved') return;
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData, incident]);
+
+  const handleStatusChange = async (next) => {
+    if (next === incident.status) return;
+    try {
+      await api.changeStatus(incident.id, next);
+      await fetchData();
+      toast.success(`Status updated to ${next}`);
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const saveTitle = async () => {
+    if (titleDraft.trim() && titleDraft !== incident.title) {
+      try {
+        await api.updateIncident(incident.id, { title: titleDraft.trim() });
+        setIncident((prev) => ({ ...prev, title: titleDraft.trim() }));
+        toast.success('Title updated');
+      } catch {
+        toast.error('Failed to update title');
+      }
+    }
+    setEditingTitle(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center gap-4">
+        <Motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+        >
+          <Loader2 className="h-10 w-10 text-[var(--color-brand-primary)]" />
+        </Motion.div>
+        <p className="text-sm font-medium text-[var(--color-muted)]">
+          Fetching intelligence...
+        </p>
+      </div>
+    );
+  }
 
   if (!incident) {
     return (
       <div className="mx-auto max-w-2xl py-16 text-center">
         <p className="text-sm text-[var(--color-muted)]">Incident not found.</p>
-        <Button variant="ghost" className="mt-4" onClick={() => navigate('/app/incidents')}>
+        <Button
+          variant="ghost"
+          className="mt-4"
+          onClick={() => navigate('/app/incidents')}
+        >
           <ArrowLeft className="h-4 w-4" /> Back to incidents
         </Button>
       </div>
     );
   }
 
-  const handleStatusChange = async (next) => {
-    if (next === incident.status) return;
-    await api.changeStatus(incident.id, next);
-    toast.success(`Status → ${next}`);
-  };
-
-  const saveTitle = async () => {
-    if (titleDraft.trim() && titleDraft !== incident.title) {
-      await api.updateIncident(incident.id, { title: titleDraft.trim() });
-      toast.success('Title updated');
-    }
-    setEditingTitle(false);
-  };
-
-  const reversedUpdates = useMemo(
-    () => [...incident.updates].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
-    [incident.updates]
-  );
-
   return (
-    <motion.div
+    <Motion.div
       variants={fadeUp}
       initial="hidden"
       animate="visible"
       className="mx-auto max-w-7xl"
     >
-      {/* Sticky header */}
-      <div className="sticky top-16 z-20 -mx-4 -mt-6 mb-6 border-b border-[var(--color-border)] bg-[var(--color-background)]/80 px-4 py-4 backdrop-blur-xl md:-mx-8 md:px-8">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
-              <Link to="/app/incidents" className="hover:text-[var(--color-foreground)]">
-                Incidents
-              </Link>
-              <span>/</span>
-              <span className="font-mono">{incident.id}</span>
-            </div>
-            {/* Title — inline editable */}
-            <div className="mt-1 flex items-center gap-2">
-              {editingTitle ? (
-                <input
-                  autoFocus
-                  value={titleDraft}
-                  onChange={(e) => setTitleDraft(e.target.value)}
-                  onBlur={saveTitle}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') saveTitle();
-                    if (e.key === 'Escape') {
-                      setTitleDraft(incident.title);
-                      setEditingTitle(false);
-                    }
-                  }}
-                  className="w-full bg-transparent text-2xl font-semibold tracking-tight focus:outline-none"
-                />
-              ) : (
+      {/* Header Section */}
+      <div className="mb-8 flex flex-col gap-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <Link to="/app/incidents">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2 text-xs font-mono text-[var(--color-muted)]">
+            <span>
+              INC-
+              {String(incident.id || '')
+                .slice(-6)
+                .toUpperCase()}
+            </span>
+            <span className="opacity-30">|</span>
+            <span>
+              Created <LiveDuration from={incident.createdAt} /> ago
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            {editingTitle ? (
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveTitle();
+                  if (e.key === 'Escape') {
+                    setTitleDraft(incident.title);
+                    setEditingTitle(false);
+                  }
+                }}
+                className="w-full bg-transparent text-4xl font-bold tracking-tight focus:outline-none"
+              />
+            ) : (
+              <div className="group flex items-center gap-3">
+                <h1 className="text-4xl font-bold tracking-tight">
+                  {incident.title}
+                </h1>
                 <button
                   onClick={() => setEditingTitle(true)}
-                  className="group flex items-center gap-2 text-left"
+                  className="opacity-0 group-hover:opacity-40 transition-opacity"
                 >
-                  <h1 className="text-2xl font-semibold tracking-tight">{incident.title}</h1>
-                  <Pencil className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-50" />
+                  <Pencil className="h-5 w-5" />
                 </button>
-              )}
-            </div>
-            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              </div>
+            )}
+
+            <div className="mt-4 flex items-center gap-3">
               <SeverityBadge severity={incident.severity} />
               <StatusBadge status={incident.status} animated />
-              <span className="text-xs text-[var(--color-muted)] tabular-nums">
-                Open for <LiveDuration from={incident.createdAt} until={incident.resolvedAt} />
-              </span>
+              <div className="h-4 w-px bg-[var(--color-border)] mx-1" />
               <LiveViewers incidentId={incident.id} />
             </div>
           </div>
+
           <div className="flex items-center gap-2">
-            <Button
-              variant={demoMode ? 'gradient' : 'outline'}
-              size="sm"
-              onClick={() => setDemoMode((v) => !v)}
-              title="Toggle live simulation"
-            >
-              <Radio className="h-3.5 w-3.5" />
-              {demoMode ? 'Live demo on' : 'Live demo'}
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/app/incidents/${incident.id}/postmortem`}>
+                Generate Postmortem
+              </Link>
             </Button>
-            <Button variant="ghost" size="icon-sm" aria-label="More">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <MoreHorizontal className="h-5 w-5" />
             </Button>
           </div>
         </div>
-        <div className="mt-4">
-          <StatusPipeline current={incident.status} onChange={handleStatusChange} />
+
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-1 backdrop-blur-sm">
+          <StatusPipeline
+            current={incident.status}
+            onChange={handleStatusChange}
+          />
         </div>
       </div>
 
-      {/* Two-column body */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="min-w-0 space-y-5">
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold">Description</h2>
-            <p className="mt-1 text-sm text-[var(--color-muted)] whitespace-pre-wrap">
-              {incident.description || 'No description provided.'}
-            </p>
-          </Card>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Timeline</h2>
-              <span className="text-xs text-[var(--color-muted)]">
-                {incident.updates.length} updates
-              </span>
-            </div>
-            <Timeline updates={reversedUpdates} />
-          </div>
-
-          <div className="space-y-2">
-            <TypingIndicator visible={showTyping} />
-            <AddUpdateForm
-              incidentId={incident.id}
-              currentStatus={incident.status}
-              onTyping={setTyping}
-            />
-          </div>
-        </div>
+      {/* Main Grid: Left sidebar with info, Right main with timeline */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[340px_1fr]">
+        {/* Left Column: Details & Services */}
 
         <aside className="space-y-4">
           {/* AI Brief sits at the top of the sidebar — it's the headline
@@ -206,7 +229,43 @@ export default function IncidentDetail() {
           <DetailsCard incident={incident} />
           <ActionsCard incident={incident} />
         </aside>
+
+        {/* Center/Right Column: Timeline */}
+        <div className="min-w-0 space-y-6">
+          <Card className="p-6">
+            <h2 className="text-sm font-semibold">Incident Description</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--color-muted-strong)] whitespace-pre-wrap">
+              {incident.description ||
+                'Initial report pending detailed description.'}
+            </p>
+          </Card>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold">Timeline</h2>
+              <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+                <div className="size-2 rounded-full bg-green-500 animate-pulse" />
+                Live Feed
+              </div>
+            </div>
+
+            <div className="relative pl-8">
+              <div className="absolute left-3 top-0 bottom-0 w-px bg-gradient-to-b from-[var(--color-border)] via-[var(--color-border)] to-transparent" />
+              <Timeline updates={updates} />
+            </div>
+
+            <div className="mt-8 pt-4 border-t border-[var(--color-border)]">
+              <TypingIndicator visible={typing} />
+              <AddUpdateForm
+                incidentId={incident.id}
+                currentStatus={incident.status}
+                onTyping={setTyping}
+                onSuccess={fetchData}
+              />
+            </div>
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </Motion.div>
   );
 }

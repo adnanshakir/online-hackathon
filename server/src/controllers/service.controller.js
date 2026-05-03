@@ -145,6 +145,39 @@ export const updateService = async (req, res, next) => {
   }
 };
 
+// FIX (2026-05-02): Toggle service health status from the Services page.
+// Used by the dashboard "operational/degraded/down/maintenance" pill — also
+// surfaces on the public status page. Workspace-scoped so cross-tenant
+// writes are blocked.
+export const updateServiceStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const allowed = ['operational', 'degraded', 'down', 'maintenance'];
+    if (!allowed.includes(status)) {
+      throw new AppError(
+        `Invalid status. Allowed: ${allowed.join(', ')}`,
+        400
+      );
+    }
+
+    const service = await Service.findOneAndUpdate(
+      { _id: req.params.id, workspace: req.user.workspace },
+      { healthStatus: status },
+      { new: true }
+    );
+
+    if (!service) {
+      throw new AppError('Service not found', 404);
+    }
+
+    await service.populate('createdBy', 'name email');
+
+    return res.status(200).json(service);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 // Toggle service health status (operational/degraded/down/maintenance)
 // Surfaced on dashboard + public status page. Workspace-scoped.
 export const updateServiceStatus = async (req, res, next) => {

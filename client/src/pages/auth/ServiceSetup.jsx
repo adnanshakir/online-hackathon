@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion, AnimatePresence } from 'motion/react';
+const Motion = _motion;
 import {
   Plus,
   ArrowRight,
@@ -166,7 +167,7 @@ export default function ServiceSetup() {
       <div className="z-10 w-full max-w-2xl">
         <AnimatePresence mode="wait">
           {step === 1 && (
-            <motion.div
+            <Motion.div
               key="step1"
               variants={stagger(0.1, 0.1)}
               initial="hidden"
@@ -174,22 +175,22 @@ export default function ServiceSetup() {
               exit={{ opacity: 0, x: -20 }}
               className="flex flex-col"
             >
-              <motion.div
+              <Motion.div
                 variants={fadeUp}
                 className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-brand-primary)]/20 bg-[var(--color-brand-primary)]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]"
               >
                 <Settings className="h-3 w-3" />
                 Step 1: Core Context
-              </motion.div>
+              </Motion.div>
 
-              <motion.h1
+              <Motion.h1
                 variants={fadeUp}
                 className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]"
               >
                 What are we managing?
-              </motion.h1>
+              </Motion.h1>
 
-              <motion.div
+              <Motion.div
                 variants={fadeUp}
                 className="mt-8 space-y-8 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 shadow-2xl"
               >
@@ -214,7 +215,7 @@ export default function ServiceSetup() {
                         >
                           <div className="flex items-center gap-3">
                             <div className="grid size-10 place-items-center rounded-lg bg-[var(--color-surface-elevated)] transition-all group-hover:bg-[var(--color-brand-primary)]/20">
-                              <motion.div
+                              <Motion.div
                                 whileHover={{ scale: 1.1, rotate: 5 }}
                                 transition={{
                                   type: 'spring',
@@ -223,7 +224,7 @@ export default function ServiceSetup() {
                                 }}
                               >
                                 <Icon className="h-5 w-5 text-[var(--color-muted)] transition-colors group-hover:text-[var(--color-brand-primary)]" />
-                              </motion.div>
+                              </Motion.div>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="text-[11px] font-bold text-[var(--color-foreground)] transition-colors group-hover:text-[var(--color-brand-primary)]">
@@ -318,12 +319,12 @@ export default function ServiceSetup() {
                 >
                   Continue to Details <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
 
           {step === 2 && (
-            <motion.div
+            <Motion.div
               key="step2"
               variants={stagger(0.1, 0.1)}
               initial="hidden"
@@ -331,22 +332,22 @@ export default function ServiceSetup() {
               exit={{ opacity: 0, x: -20 }}
               className="flex flex-col"
             >
-              <motion.div
+              <Motion.div
                 variants={fadeUp}
                 className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-brand-primary)]/20 bg-[var(--color-brand-primary)]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]"
               >
                 <Sparkles className="h-3 w-3" />
                 Step 2: Technical Context
-              </motion.div>
+              </Motion.div>
 
-              <motion.h1
+              <Motion.h1
                 variants={fadeUp}
                 className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)]"
               >
                 Technical Blueprint
-              </motion.h1>
+              </Motion.h1>
 
-              <motion.form
+              <Motion.form
                 variants={fadeUp}
                 onSubmit={handleSubmit}
                 className="mt-8 space-y-6 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 shadow-2xl"
@@ -422,40 +423,39 @@ export default function ServiceSetup() {
                     )}
                   </Button>
                 </div>
-              </motion.form>
-            </motion.div>
+              </Motion.form>
+            </Motion.div>
           )}
 
           {step === 3 && (
-            <motion.div
+            <Motion.div
               key="step3"
               variants={stagger(0.1, 0.1)}
               initial="hidden"
               animate="visible"
               className="text-center"
             >
-              <motion.div
+              <Motion.div
                 variants={scaleIn}
                 className="mx-auto mb-6 flex size-24 items-center justify-center rounded-full bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] shadow-[0_0_50px_-15px_rgba(var(--color-brand-primary-rgb),0.6)]"
               >
                 <CheckCircle className="h-12 w-12" />
-              </motion.div>
-
-              <motion.h1
+              </Motion.div>
+              <Motion.h1
                 variants={fadeUp}
                 className="text-5xl font-semibold tracking-tight text-[var(--color-foreground)]"
               >
                 Command Center Ready
-              </motion.h1>
-              <motion.p
+              </Motion.h1>
+              <Motion.p
                 variants={fadeUp}
                 className="mt-5 text-lg text-[var(--color-muted-strong)] max-w-sm mx-auto leading-relaxed"
               >
                 Your service is now under watch. Everything is in place for your
                 first incident report.
-              </motion.p>
+              </Motion.p>
 
-              <motion.div variants={fadeUp} className="mt-12">
+              <Motion.div variants={fadeUp} className="mt-12">
                 <Button
                   variant="gradient"
                   size="lg"
@@ -464,8 +464,8 @@ export default function ServiceSetup() {
                 >
                   Enter Dashboard <Sparkles className="ml-2 h-5 w-5" />
                 </Button>
-              </motion.div>
-            </motion.div>
+              </Motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
       </div>

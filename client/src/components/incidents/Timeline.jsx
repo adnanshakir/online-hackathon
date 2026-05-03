@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion as Motion } from 'motion/react';
 import { Avatar } from '@/components/shared/Avatar';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { getUserById } from '@/data/users';
@@ -13,10 +13,10 @@ export function Timeline({ updates = [] }) {
         aria-hidden
       />
       {updates.map((u, idx) => {
-        const author = getUserById(u.authorId);
+        const author = u.createdBy || getUserById(u.authorId);
         const isLast = idx === updates.length - 1;
         return (
-          <motion.li
+          <Motion.li
             key={u.id}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
@@ -32,7 +32,9 @@ export function Timeline({ updates = [] }) {
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
               <div className="flex items-baseline justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-sm font-medium truncate">{author?.name || 'Unknown'}</span>
+                  <span className="text-sm font-medium truncate">
+                    {author?.name || 'Unknown'}
+                  </span>
                   {u.statusChange && <StatusBadge status={u.statusChange} />}
                 </div>
                 <span
@@ -46,7 +48,7 @@ export function Timeline({ updates = [] }) {
                 {u.message}
               </p>
             </div>
-          </motion.li>
+          </Motion.li>
         );
       })}
     </ol>

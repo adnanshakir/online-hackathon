@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion, AnimatePresence } from 'motion/react';
+const Motion = _motion;
 import {
   Plus,
   Users,
@@ -103,7 +104,7 @@ export default function WorkspaceDecision() {
       <div className="z-10 w-full max-w-4xl">
         <AnimatePresence mode="wait">
           {view === 'choose' && (
-            <motion.div
+            <Motion.div
               key="choose"
               variants={stagger(0.1, 0.1)}
               initial="hidden"
@@ -111,30 +112,30 @@ export default function WorkspaceDecision() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center"
             >
-              <motion.div
+              <Motion.div
                 variants={fadeUp}
                 className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-brand-primary)]/20 bg-[var(--color-brand-primary)]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]"
               >
                 <Sparkles className="h-3 w-3" />
                 First Step
-              </motion.div>
+              </Motion.div>
 
-              <motion.h1
+              <Motion.h1
                 variants={fadeUp}
                 className="text-4xl font-semibold tracking-tight text-[var(--color-foreground)] sm:text-5xl"
               >
                 Ready to Ops?
-              </motion.h1>
-              <motion.p
+              </Motion.h1>
+              <Motion.p
                 variants={fadeUp}
                 className="mt-4 text-base text-[var(--color-muted-strong)]"
               >
                 Create a new workspace for your team or join an existing one.
-              </motion.p>
+              </Motion.p>
 
               <div className="mt-12 grid gap-6 sm:grid-cols-2">
                 {/* Option A: Create */}
-                <motion.button
+                <Motion.button
                   variants={scaleIn}
                   onClick={() => setView('create')}
                   className="group relative flex flex-col items-start rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 text-left transition-all hover:border-[var(--color-brand-primary)]/50 hover:shadow-[0_0_40px_-12px_rgba(var(--color-brand-primary-rgb),0.2)]"
@@ -152,10 +153,10 @@ export default function WorkspaceDecision() {
                   <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-[var(--color-brand-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
                     Get started <ArrowRight className="h-3 w-3" />
                   </div>
-                </motion.button>
+                </Motion.button>
 
                 {/* Option B: Join */}
-                <motion.button
+                <Motion.button
                   variants={scaleIn}
                   onClick={() => setView('join')}
                   className="group relative flex flex-col items-start rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 text-left transition-all hover:border-[var(--color-brand-primary)]/50 hover:shadow-[0_0_40px_-12px_rgba(var(--color-brand-primary-rgb),0.2)]"
@@ -173,13 +174,13 @@ export default function WorkspaceDecision() {
                   <div className="mt-6 flex items-center gap-2 text-xs font-semibold text-[var(--color-brand-primary)] opacity-0 group-hover:opacity-100 transition-opacity">
                     Enter code <ArrowRight className="h-3 w-3" />
                   </div>
-                </motion.button>
+                </Motion.button>
               </div>
-            </motion.div>
+            </Motion.div>
           )}
 
           {view === 'create' && (
-            <motion.div
+            <Motion.div
               key="create"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -243,11 +244,11 @@ export default function WorkspaceDecision() {
                   )}
                 </Button>
               </form>
-            </motion.div>
+            </Motion.div>
           )}
 
           {view === 'join' && (
-            <motion.div
+            <Motion.div
               key="join"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -310,7 +311,7 @@ export default function WorkspaceDecision() {
                   </p>
                 </div>
               </form>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
       </div>

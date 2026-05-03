@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react'; // eslint-disable-line no-unused-vars
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
 import {
   AlertTriangle,
   Clock,
@@ -75,7 +76,7 @@ export default function Dashboard() {
   }, [incidents]);
 
   return (
-    <motion.div
+    <Motion.div
       variants={fadeUp}
       initial="hidden"
       animate="visible"
@@ -98,12 +99,12 @@ export default function Dashboard() {
 
       {loading ? (
         <div className="flex h-96 flex-col items-center justify-center gap-4">
-          <motion.div
+          <Motion.div
             animate={{ rotate: 360 }}
             transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
           >
             <Loader2 className="h-10 w-10 text-[var(--color-brand-primary)]" />
-          </motion.div>
+          </Motion.div>
           <p className="text-sm font-medium text-[var(--color-muted)]">
             Syncing with HQ...
           </p>
@@ -177,6 +178,6 @@ export default function Dashboard() {
           </div>
         </>
       )}
-    </motion.div>
+    </Motion.div>
   );
 }

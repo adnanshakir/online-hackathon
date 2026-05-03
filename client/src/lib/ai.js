@@ -11,7 +11,11 @@ const SUGGESTION_BANK = {
       probability: 0.78,
       reasoning:
         'Recent deploy may have introduced long-running queries holding connections. Check `pg_stat_activity` for queries in `idle in transaction` state.',
-      checks: ['Query latency P99', 'Active connection count', 'Lock wait events'],
+      checks: [
+        'Query latency P99',
+        'Active connection count',
+        'Lock wait events',
+      ],
     },
     {
       title: 'Replication lag on read replicas',
@@ -35,21 +39,33 @@ const SUGGESTION_BANK = {
       probability: 0.81,
       reasoning:
         'Webhook consumer cannot keep up with event volume. Check queue depth and consumer pod memory.',
-      checks: ['Webhook queue depth', 'Consumer pod restarts', 'Stripe dashboard delivery rate'],
+      checks: [
+        'Webhook queue depth',
+        'Consumer pod restarts',
+        'Stripe dashboard delivery rate',
+      ],
     },
     {
       title: 'Idempotency key collision',
       probability: 0.54,
       reasoning:
         'Recent client deploy may be reusing idempotency keys, causing Stripe to return 409s on retry.',
-      checks: ['Stripe API 409 rate', 'Recent client deploys', 'Idempotency key generation logic'],
+      checks: [
+        'Stripe API 409 rate',
+        'Recent client deploys',
+        'Idempotency key generation logic',
+      ],
     },
     {
       title: 'Network egress to api.stripe.com',
       probability: 0.41,
       reasoning:
         'TLS handshake or DNS resolution issues can intermittently fail Stripe calls. Common after cert rotations.',
-      checks: ['TLS handshake errors', 'DNS resolution latency', 'Recent cert rotations'],
+      checks: [
+        'TLS handshake errors',
+        'DNS resolution latency',
+        'Recent cert rotations',
+      ],
     },
   ],
 
@@ -59,14 +75,22 @@ const SUGGESTION_BANK = {
       probability: 0.72,
       reasoning:
         'Auth depends on Redis for session lookups. Long-running scans can block all other clients.',
-      checks: ['Redis pool utilization', 'Slow log', 'Recent deploys touching Redis'],
+      checks: [
+        'Redis pool utilization',
+        'Slow log',
+        'Recent deploys touching Redis',
+      ],
     },
     {
       title: 'JWT signing key rotation issue',
       probability: 0.51,
       reasoning:
         'A key rotation that did not propagate cleanly will cause some validators to reject otherwise-valid tokens.',
-      checks: ['Validator key cache', 'Rotation timestamp', 'JWKS endpoint reachability'],
+      checks: [
+        'Validator key cache',
+        'Rotation timestamp',
+        'JWKS endpoint reachability',
+      ],
     },
     {
       title: 'Upstream identity provider degradation',
@@ -83,7 +107,11 @@ const SUGGESTION_BANK = {
       probability: 0.68,
       reasoning:
         'Recent CDN config change may have introduced a query parameter or header into the cache key, fragmenting cache entries per-session.',
-      checks: ['Cache miss rate', 'Recent CDN config changes', 'Origin request rate'],
+      checks: [
+        'Cache miss rate',
+        'Recent CDN config changes',
+        'Origin request rate',
+      ],
     },
     {
       title: 'Origin server pressure',
@@ -100,14 +128,22 @@ const SUGGESTION_BANK = {
       probability: 0.74,
       reasoning:
         'Common after cert rotations — especially missing intermediate certs in the chain.',
-      checks: ['Outbound TLS errors', 'Recent cert deployments', 'fullchain.pem present'],
+      checks: [
+        'Outbound TLS errors',
+        'Recent cert deployments',
+        'fullchain.pem present',
+      ],
     },
     {
       title: 'Receiver returning 5xx',
       probability: 0.49,
       reasoning:
         'External webhook target may itself be degraded. Confirm against their status page.',
-      checks: ['Receiver status page', 'Per-endpoint success rate', 'Retry queue depth'],
+      checks: [
+        'Receiver status page',
+        'Per-endpoint success rate',
+        'Retry queue depth',
+      ],
     },
   ],
 
@@ -117,7 +153,11 @@ const SUGGESTION_BANK = {
       probability: 0.71,
       reasoning:
         'Backfill or update spike has overwhelmed the indexer pool. Lag will surface as stale search results.',
-      checks: ['Kafka consumer lag', 'Indexer pod count', 'Recent backfill jobs'],
+      checks: [
+        'Kafka consumer lag',
+        'Indexer pod count',
+        'Recent backfill jobs',
+      ],
     },
     {
       title: 'Elasticsearch cluster degradation',
@@ -134,14 +174,22 @@ const SUGGESTION_BANK = {
       probability: 0.69,
       reasoning:
         'Recent template merge may have introduced malformed MIME headers. Check Sendgrid API error responses.',
-      checks: ['Sendgrid 4xx rate', 'Recent template merges', 'Bounce log diagnostics'],
+      checks: [
+        'Sendgrid 4xx rate',
+        'Recent template merges',
+        'Bounce log diagnostics',
+      ],
     },
     {
       title: 'IP/domain reputation drop',
       probability: 0.42,
       reasoning:
         'Sender reputation can drop after a list-import or spam complaint surge, causing bounces from major providers.',
-      checks: ['Sender reputation score', 'Bounce rate by recipient domain', 'Recent send volume'],
+      checks: [
+        'Sender reputation score',
+        'Bounce rate by recipient domain',
+        'Recent send volume',
+      ],
     },
   ],
 
@@ -159,7 +207,11 @@ const SUGGESTION_BANK = {
       probability: 0.51,
       reasoning:
         'Many production incidents trace to a degraded third-party. Check the status pages of each external integration.',
-      checks: ['Third-party status pages', 'Outbound error rate by host', 'Latency to external APIs'],
+      checks: [
+        'Third-party status pages',
+        'Outbound error rate by host',
+        'Latency to external APIs',
+      ],
     },
     {
       title: 'Resource saturation',
@@ -172,9 +224,18 @@ const SUGGESTION_BANK = {
 };
 
 const KEYWORD_MAP = [
-  { keys: ['database', 'db', 'postgres', 'mysql', 'replica', 'sql'], bucket: 'database' },
-  { keys: ['payment', 'stripe', 'billing', 'charge', 'checkout'], bucket: 'payment' },
-  { keys: ['auth', 'login', 'token', 'session', 'sso', 'oauth', '504'], bucket: 'auth' },
+  {
+    keys: ['database', 'db', 'postgres', 'mysql', 'replica', 'sql'],
+    bucket: 'database',
+  },
+  {
+    keys: ['payment', 'stripe', 'billing', 'charge', 'checkout'],
+    bucket: 'payment',
+  },
+  {
+    keys: ['auth', 'login', 'token', 'session', 'sso', 'oauth', '504'],
+    bucket: 'auth',
+  },
   { keys: ['cdn', 'cache', 'edge'], bucket: 'cdn' },
   { keys: ['webhook', 'tls', 'certificate'], bucket: 'webhook' },
   { keys: ['search', 'elastic', 'index', 'query'], bucket: 'search' },
@@ -229,7 +290,10 @@ Return ONLY the JSON array, no markdown, no commentary.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.4, responseMimeType: 'application/json' },
+        generationConfig: {
+          temperature: 0.4,
+          responseMimeType: 'application/json',
+        },
       }),
     }
   );
@@ -253,7 +317,56 @@ export async function suggestCauses(title, description) {
 }
 
 /** Used by the postmortem regenerate button — same pattern. */
-export async function regeneratePostmortem(incident) {
+export async function regeneratePostmortem() {
   await new Promise((r) => setTimeout(r, 1600 + Math.random() * 800));
   return { regeneratedAt: new Date().toISOString() };
+}
+
+/**
+ * Polish/improve an incident description using AI.
+ * Falls back to a prompt-augmented local rewrite if no Gemini key.
+ */
+export async function polishDescription(title, description) {
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+
+  if (key) {
+    try {
+      const prompt = `You are an expert SRE technical writer. Improve the following incident description to be clear, concise, and actionable for an on-call engineer.
+
+Incident title: ${title || '(untitled)'}
+Current description: ${description}
+
+Rules:
+- Keep it under 3 sentences
+- Mention symptoms, scope, and observed signals
+- Use technical but plain English
+- Do NOT add headers or markdown
+- Return ONLY the improved description text, nothing else`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3 },
+          }),
+        }
+      );
+      if (!res.ok) throw new Error(`Gemini ${res.status}`);
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (text) return { polished: text, source: 'gemini' };
+    } catch (err) {
+      console.warn('[ai] gemini polish failed, using local:', err.message);
+    }
+  }
+
+  // Local fallback — deterministically enrich the description
+  await new Promise((r) => setTimeout(r, 900 + Math.random() * 600));
+  const base = description.trim();
+  const titleHint = title ? ` related to ${title}` : '';
+  const polished = `${base.endsWith('.') ? base : base + '.'} Issue${titleHint} is actively impacting users — scope and blast radius are being assessed. Engineers are investigating logs and monitoring dashboards for root cause signals.`;
+  return { polished, source: 'local' };
 }
