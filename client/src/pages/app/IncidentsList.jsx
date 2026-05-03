@@ -27,27 +27,41 @@ export default function IncidentsList() {
   const severityFilter = params.get('severity') || 'all';
   const [query, setQuery] = useState('');
 
-  const fetchIncidents = useCallback(async () => {
-    setLoading(true);
+  const fetchIncidents = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
-      const data = await listIncidents({
-        filter: filter === 'all' ? undefined : filter,
-        severity: severityFilter === 'all' ? undefined : severityFilter,
-      });
+      // Fetch all incidents to ensure we have correct counts for all tabs
+      const data = await listIncidents();
       setIncidents(data);
     } catch (err) {
       console.error('Failed to fetch incidents:', err);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
-  }, [filter, severityFilter]);
+  }, []);
 
   useEffect(() => {
-    fetchIncidents();
+    fetchIncidents(true);
+    const interval = setInterval(() => fetchIncidents(false), 5000);
+    return () => clearInterval(interval);
   }, [fetchIncidents]);
 
   const filtered = useMemo(() => {
     let out = incidents;
+
+    // Filter by tab status
+    if (filter === 'active') {
+      out = out.filter((i) => i.status !== 'resolved');
+    } else if (filter === 'resolved') {
+      out = out.filter((i) => i.status === 'resolved');
+    }
+
+    // Filter by severity
+    if (severityFilter !== 'all') {
+      out = out.filter((i) => i.severity === severityFilter);
+    }
+
+    // Filter by search query
     if (query.trim()) {
       const q = query.toLowerCase();
       out = out.filter(
@@ -56,8 +70,9 @@ export default function IncidentsList() {
           i.description?.toLowerCase().includes(q)
       );
     }
+
     return out.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [incidents, query]);
+  }, [incidents, filter, severityFilter, query]);
 
   const counts = useMemo(
     () => ({

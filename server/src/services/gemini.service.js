@@ -4,7 +4,7 @@ import { logger } from '../utils/logger.js';
 
 const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-  model: 'gemini-2.5-flash',
+  model: 'gemini-1.5-flash',
 });
 
 export const generateGeminiResponse = async (prompt) => {

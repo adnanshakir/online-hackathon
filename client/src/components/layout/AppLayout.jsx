@@ -30,10 +30,10 @@ export function AppLayout() {
   }
 
   return (
-    <div className="relative flex min-h-screen text-[var(--color-foreground)]">
+    <div className="relative flex h-screen overflow-hidden text-[var(--color-foreground)]">
       <AmbientGlow variant="app" />
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <TopBar />
         <main className="relative flex-1 px-4 py-6 md:px-8 md:py-8">
           <div className="pointer-events-none absolute inset-0 -z-10 bg-grid opacity-40 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />

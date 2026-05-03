@@ -14,6 +14,15 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { SeverityBadge } from '@/components/shared/SeverityBadge';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { LiveDuration } from '@/components/shared/LiveDuration';
@@ -30,6 +39,7 @@ import { TypingIndicator } from '@/components/incidents/TypingIndicator';
 import * as api from '@/lib/api';
 import { fadeUp } from '@/components/motion/variants';
 import { USERS } from '@/data/users';
+import { useAuthStore } from '@/store/authStore';
 
 export default function IncidentDetail() {
   const { id } = useParams();
@@ -42,6 +52,10 @@ export default function IncidentDetail() {
   const [titleDraft, setTitleDraft] = useState('');
   const [typing, setTyping] = useState(false);
 
+  const [confirmStatus, setConfirmStatus] = useState(null);
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
   const fetchData = useCallback(async () => {
     try {
       const [incidentData, updatesData] = await Promise.all([
@@ -53,7 +67,6 @@ export default function IncidentDetail() {
       setTitleDraft(incidentData.title);
     } catch (_err) {
       console.error('Failed to fetch incident data:', _err);
-      toast.error('Could not load incident details');
     } finally {
       setLoading(false);
     }
@@ -63,21 +76,51 @@ export default function IncidentDetail() {
     fetchData();
   }, [fetchData]);
 
-  // Refresh every 30s for "live" feel
+  // High-frequency polling for "Real-time" feel
   useEffect(() => {
     if (!incident || incident.status === 'resolved') return;
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 3000); // 3 seconds
     return () => clearInterval(interval);
   }, [fetchData, incident]);
 
-  const handleStatusChange = async (next) => {
-    if (next === incident.status) return;
+  const handleStatusChange = async () => {
+    if (!confirmStatus || !confirmMessage.trim()) return;
+    setUpdatingStatus(true);
     try {
-      await api.changeStatus(incident.id, next);
+      await api.postUpdate(incident.id, {
+        message: confirmMessage.trim(),
+        statusChange: confirmStatus,
+      });
       await fetchData();
-      toast.success(`Status updated to ${next}`);
+      toast.success(`Status updated to ${confirmStatus}`);
+      setConfirmStatus(null);
+      setConfirmMessage('');
     } catch {
       toast.error('Failed to update status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const closeWithoutResolution = async () => {
+    const reason = window.prompt(
+      'Please provide a reason for closing without resolution:',
+      'Issue no longer relevant or duplicate.'
+    );
+    if (reason === null) return;
+
+    setLoading(true);
+    try {
+      await api.postUpdate(incident.id, {
+        message: `[CLOSED WITHOUT RESOLUTION] ${reason}`,
+        statusChange: 'resolved',
+      });
+      await fetchData();
+      toast.success('Incident closed');
+    } catch (err) {
+      toast.error('Failed to close incident');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -132,6 +175,49 @@ export default function IncidentDetail() {
       animate="visible"
       className="mx-auto max-w-7xl"
     >
+      {/* Status Confirmation Dialog */}
+      <Dialog
+        open={!!confirmStatus}
+        onOpenChange={(open) => !open && setConfirmStatus(null)}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Confirm Status Change
+            </DialogTitle>
+            <DialogDescription>
+              Transitioning incident to{' '}
+              <StatusBadge status={confirmStatus} size="sm" />. Please provide a
+              brief reason for this change.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              autoFocus
+              placeholder="E.g. Database load has stabilized, moving to Monitoring..."
+              value={confirmMessage}
+              onChange={(e) => setConfirmMessage(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setConfirmStatus(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="gradient"
+              disabled={!confirmMessage.trim() || updatingStatus}
+              onClick={handleStatusChange}
+            >
+              {updatingStatus ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Confirm Transition
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Header Section */}
       <div className="mb-8 flex flex-col gap-6">
         <div className="flex items-center gap-4">
@@ -208,26 +294,28 @@ export default function IncidentDetail() {
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-1 backdrop-blur-sm">
           <StatusPipeline
             current={incident.status}
-            onChange={handleStatusChange}
+            onChange={(s) => {
+              if (s !== incident.status) setConfirmStatus(s);
+            }}
           />
         </div>
       </div>
 
       {/* Main Grid: Left sidebar with info, Right main with timeline */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[340px_1fr]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(320px,340px)_1fr]">
         {/* Left Column: Details & Services */}
 
-        <aside className="space-y-4">
+        <aside className="sticky top-24 self-start space-y-4">
           {/* AI Brief sits at the top of the sidebar — it's the headline
               feature and the most-clicked thing on this page. */}
           <AIBriefCard incidentId={incident.id} />
           <RespondersCard
             assigneeIds={incident.assigneeIds}
-            onAdd={() => toast.info('Add responder — coming soon')}
+            onAdd={() => {}} // Now handled by the internal invite button or could be extended later
           />
           <AffectedServicesCard serviceIds={incident.serviceIds} />
           <DetailsCard incident={incident} />
-          <ActionsCard incident={incident} />
+          <ActionsCard incident={incident} onClose={closeWithoutResolution} />
         </aside>
 
         {/* Center/Right Column: Timeline */}
@@ -255,7 +343,10 @@ export default function IncidentDetail() {
             </div>
 
             <div className="mt-8 pt-4 border-t border-[var(--color-border)]">
-              <TypingIndicator visible={typing} />
+              <TypingIndicator
+                visible={typing}
+                user={useAuthStore.getState().user}
+              />
               <AddUpdateForm
                 incidentId={incident.id}
                 currentStatus={incident.status}

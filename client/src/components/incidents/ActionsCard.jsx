@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-export function ActionsCard({ incident }) {
+export function ActionsCard({ incident, onClose }) {
   const isResolved = incident.status === 'resolved';
 
   const copyShareLink = async () => {
@@ -42,12 +42,22 @@ export function ActionsCard({ incident }) {
             </>
           )}
         </Button>
-        <Button variant="outline" size="sm" className="w-full justify-start" onClick={copyShareLink}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full justify-start"
+          onClick={copyShareLink}
+        >
           <Share2 className="h-3.5 w-3.5" />
           Share public link
         </Button>
         {!isResolved && (
-          <Button variant="ghost" size="sm" className="w-full justify-start text-red-400 hover:bg-red-500/10 hover:text-red-300">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            onClick={onClose}
+          >
             <XCircle className="h-3.5 w-3.5" />
             Close without resolution
           </Button>
