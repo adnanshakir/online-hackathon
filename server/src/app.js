@@ -41,14 +41,19 @@ app.use(
 // Logger
 app.use(
   pinoHttp({
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        ignore: 'pid,hostname,req,res', // 👈 removes big clutter
-      },
-    },
+    transport:
+      process.env.NODE_ENV === 'production'
+        ? undefined
+        : {
+            target: 'pino-pretty',
+            options: {
+              colorize: true,
+              ignore: 'pid,hostname,req,res',
+            },
+          },
+
     redact: ['req.headers.cookie', 'req.headers.authorization'],
+
     customSuccessMessage: (req, res) =>
       `${req.method} ${req.url} -> ${res.statusCode}`,
 
