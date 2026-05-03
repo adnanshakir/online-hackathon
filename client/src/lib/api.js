@@ -27,8 +27,13 @@ import { isDemoMode, disableDemoMode, DEMO_USER } from '@/lib/demo';
 
 /* ────────── Axios client ────────── */
 
+const RAW_API_URL = import.meta.env.VITE_API_URL?.trim();
+const API_BASE_URL = RAW_API_URL
+  ? `${RAW_API_URL.replace(/\/$/, '')}${RAW_API_URL.includes('/api') ? '' : '/api'}`
+  : '/api';
+
 const http = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -50,7 +55,9 @@ http.interceptors.response.use(
     ) {
       original._retried = true;
       try {
-        await axios.post('/api/auth/refresh-token'); // use raw axios to avoid interceptor loop
+        await axios.post(`${API_BASE_URL}/auth/refresh-token`, null, {
+          withCredentials: true,
+        });
         return http(original);
       } catch (refreshErr) {
         // Refresh failed -> logout
@@ -552,7 +559,7 @@ export async function me() {
  * the OAuth dance and bounces back to FRONTEND_URL with cookies set.
  */
 export function googleAuthUrl() {
-  return '/api/auth/google';
+  return `${API_BASE_URL}/auth/google`;
 }
 
 /**
