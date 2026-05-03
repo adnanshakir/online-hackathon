@@ -16,10 +16,6 @@ export const createServiceSchema = z.object({
     required_error: 'Service type is required',
   }),
 
-  techStack: z
-    .array(z.string())
-    .min(1, 'At least one technology must be listed'),
-
   environment: z.enum(['production', 'staging', 'development']).optional(),
 
   status: z.enum(['active', 'maintenance', 'deprecated']).optional(),
@@ -27,24 +23,6 @@ export const createServiceSchema = z.object({
   healthStatus: z
     .enum(['operational', 'degraded', 'down', 'maintenance'])
     .optional(),
-
-  repoUrl: z
-    .string()
-    .regex(
-      /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
-      'Invalid repository URL'
-    )
-    .optional()
-    .or(z.literal('')),
-
-  liveUrl: z
-    .string()
-    .regex(
-      /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/,
-      'Invalid live URL'
-    )
-    .optional()
-    .or(z.literal('')),
 });
 
 export const updateServiceSchema = createServiceSchema.partial();

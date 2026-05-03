@@ -8,11 +8,8 @@ export const createService = async (req, res, next) => {
       name,
       description,
       type,
-      techStack,
       environment,
       status,
-      repoUrl,
-      liveUrl,
     } = req.body;
 
     let service;
@@ -21,11 +18,8 @@ export const createService = async (req, res, next) => {
         name,
         description,
         type,
-        techStack,
         environment,
         status,
-        repoUrl,
-        liveUrl,
         workspace: req.user.workspace,
         createdBy: req.user._id,
       });
@@ -98,11 +92,8 @@ export const updateService = async (req, res, next) => {
       'name',
       'description',
       'type',
-      'techStack',
       'environment',
       'status',
-      'repoUrl',
-      'liveUrl',
     ];
 
     const hasValidField = Object.keys(req.body).some((key) =>
