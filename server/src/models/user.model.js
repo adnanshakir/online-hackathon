@@ -119,6 +119,18 @@ const userSchema = new mongoose.Schema(
 );
 
 /**
+ * Auto-generate default avatar if none provided
+ */
+userSchema.pre('save', async function () {
+  if (!this.avatar) {
+    // Generate a high-quality default avatar based on name
+    this.avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      this.name
+    )}&background=0D0D0D&color=fff&bold=true&size=256`;
+  }
+});
+
+/**
  * Hash password before saving (safety net)
  */
 userSchema.pre('save', async function () {

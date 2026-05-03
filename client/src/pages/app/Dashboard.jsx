@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion as _motion } from 'motion/react';
 const Motion = _motion;
 import {
@@ -9,14 +9,25 @@ import {
   Users,
   ArrowRight,
   Loader2,
+  Bell,
+  CheckCheck,
+  Server,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ActiveIncidentsList } from '@/components/dashboard/ActiveIncidentsList';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { fadeUp } from '@/components/motion/variants';
-import { listIncidents, workspace, getTimeline } from '@/lib/api';
+import {
+  listIncidents,
+  workspace,
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  getNotificationStreamUrl,
+} from '@/lib/api';
+import { timeAgo } from '@/lib/format';
 
 function generateSpark(seed = 1, length = 16) {
   const out = [];
@@ -28,10 +39,195 @@ function generateSpark(seed = 1, length = 16) {
   return out;
 }
 
+/* ── Type icon map ── */
+const TYPE_META = {
+  incident: { Icon: AlertTriangle, color: 'text-red-400', bg: 'bg-red-500/10' },
+  service: { Icon: Server, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  workspace: { Icon: Users, color: 'text-violet-400', bg: 'bg-violet-500/10' },
+  default: {
+    Icon: Info,
+    color: 'text-[var(--color-muted)]',
+    bg: 'bg-[var(--color-surface-elevated)]',
+  },
+};
+
+function NotifIcon({ type }) {
+  const meta = TYPE_META[type] ?? TYPE_META.default;
+  const { Icon, color, bg } = meta;
+  return (
+    <div className={`grid size-8 shrink-0 place-items-center rounded-lg ${bg}`}>
+      <Icon className={`h-3.5 w-3.5 ${color}`} />
+    </div>
+  );
+}
+
+/* ── Dashboard notification feed ── */
+function NotificationFeed() {
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const fetchNotifs = useCallback(async () => {
+    try {
+      const res = await getNotifications(1, 15);
+      setNotifications(res.data ?? []);
+      setUnreadCount(res.unreadCount ?? 0);
+    } catch {
+      /* silent */
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifs();
+
+    // SSE for real-time push
+    let sse;
+    try {
+      sse = new EventSource(getNotificationStreamUrl(), {
+        withCredentials: true,
+      });
+      sse.addEventListener('notification', (e) => {
+        try {
+          const notif = JSON.parse(e.data);
+          setNotifications((prev) => {
+            if (prev.some((n) => n._id === notif._id)) return prev;
+            return [notif, ...prev].slice(0, 15);
+          });
+          setUnreadCount((c) => c + 1);
+        } catch {
+          /* ignore */
+        }
+      });
+    } catch {
+      /* fallback to polling */
+    }
+
+    // 30s polling fallback
+    const poll = setInterval(fetchNotifs, 30000);
+    return () => {
+      sse?.close();
+      clearInterval(poll);
+    };
+  }, [fetchNotifs]);
+
+  const handleClick = async (n) => {
+    if (!n.isRead) {
+      try {
+        await markNotificationRead(n._id);
+        setNotifications((prev) =>
+          prev.map((x) => (x._id === n._id ? { ...x, isRead: true } : x))
+        );
+        setUnreadCount((c) => Math.max(0, c - 1));
+      } catch {
+        /* silent */
+      }
+    }
+    if (n.link) navigate(`/app${n.link}`);
+  };
+
+  const handleMarkAll = async () => {
+    try {
+      await markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      /* silent */
+    }
+  };
+
+  return (
+    <Card className="p-5 flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-[var(--color-muted)]" />
+          <h2 className="text-base font-semibold">Notifications</h2>
+          {unreadCount > 0 && (
+            <span className="rounded-full bg-red-500/15 px-1.5 py-px text-[10px] font-bold text-red-400">
+              {unreadCount} new
+            </span>
+          )}
+        </div>
+        {unreadCount > 0 && (
+          <button
+            onClick={handleMarkAll}
+            className="flex items-center gap-1 text-[11px] text-[var(--color-muted)] transition-colors hover:text-[var(--color-foreground)]"
+          >
+            <CheckCheck className="h-3 w-3" />
+            Mark all read
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div className="flex-1 space-y-1 overflow-y-auto max-h-[380px]">
+        {loading ? (
+          <div className="space-y-3 pt-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex gap-3 animate-pulse">
+                <div className="size-8 rounded-lg bg-[var(--color-surface-elevated)] shrink-0" />
+                <div className="flex-1 space-y-2 py-0.5">
+                  <div className="h-2.5 w-3/4 rounded bg-[var(--color-surface-elevated)]" />
+                  <div className="h-2 w-1/2 rounded bg-[var(--color-surface-elevated)]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <div className="grid size-10 place-items-center rounded-full bg-[var(--color-surface-elevated)]">
+              <Bell className="h-4 w-4 text-[var(--color-muted)]" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">All caught up!</p>
+              <p className="mt-1 text-[11px] text-[var(--color-muted)]">
+                Notifications appear here when incidents or workspace events
+                occur.
+              </p>
+            </div>
+          </div>
+        ) : (
+          notifications.map((n) => (
+            <button
+              key={n._id}
+              onClick={() => handleClick(n)}
+              className={`flex w-full gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-[var(--color-surface-elevated)] ${
+                !n.isRead ? 'bg-[var(--color-brand-primary)]/[0.04]' : ''
+              }`}
+            >
+              <NotifIcon type={n.type} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-semibold leading-snug">
+                    {n.title}
+                  </p>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span className="text-[10px] text-[var(--color-muted)] whitespace-nowrap">
+                      {timeAgo(n.createdAt)}
+                    </span>
+                    {!n.isRead && (
+                      <span className="size-1.5 rounded-full bg-[var(--color-brand-primary)] shrink-0" />
+                    )}
+                  </div>
+                </div>
+                <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-[var(--color-muted)]">
+                  {n.message}
+                </p>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export default function Dashboard() {
   const [incidents, setIncidents] = useState([]);
   const [team, setTeam] = useState([]);
-  const [allUpdates, setAllUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -42,26 +238,6 @@ export default function Dashboard() {
       ]);
       setIncidents(incData);
       setTeam(teamData);
-
-      // Fetch updates for the most recent active incidents to populate the feed
-      const activeOnly = incData
-        .filter((i) => i.status !== 'resolved')
-        .slice(0, 5);
-      const updatesPromises = activeOnly.map((i) => getTimeline(i.id));
-      const updatesResults = await Promise.all(updatesPromises);
-
-      const flatUpdates = updatesResults.flatMap((updates, idx) =>
-        updates.map((u) => ({
-          ...u,
-          incidentId: activeOnly[idx].id,
-          incidentTitle: activeOnly[idx].title,
-        }))
-      );
-      setAllUpdates(
-        flatUpdates.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        )
-      );
     } catch (err) {
       console.error('Dashboard fetch failed:', err);
     } finally {
@@ -71,7 +247,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000); // 10s poll
+    const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -94,8 +270,6 @@ export default function Dashboard() {
             return acc + ms / 60000;
           }, 0) / resolvedAll.length;
 
-    // Simulate "online" status for real users if they were updated recently
-    // In a real app, this would come from a presence API/WebSocket
     const onlineCount =
       team.length > 0 ? Math.max(1, Math.floor(team.length * 0.7)) : 0;
 
@@ -209,15 +383,8 @@ export default function Dashboard() {
               <ActiveIncidentsList incidents={stats.activeIncidents} />
             </div>
 
-            <Card className="p-5">
-              <h2 className="text-base font-semibold">Recent activity</h2>
-              <p className="text-xs text-[var(--color-muted)]">
-                Last updates across all incidents.
-              </p>
-              <div className="mt-5">
-                <ActivityFeed updates={allUpdates} limit={7} />
-              </div>
-            </Card>
+            {/* Real-time notification feed */}
+            <NotificationFeed />
           </div>
         </>
       )}

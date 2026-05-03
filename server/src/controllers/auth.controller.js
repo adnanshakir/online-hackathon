@@ -230,7 +230,15 @@ export const logout = async (req, res, next) => {
 
 export const googleCallback = async (req, res, next) => {
   try {
+    if (!req.user) {
+      console.error(
+        '[googleCallback] Passport failed to attach user to request'
+      );
+      throw new AppError('Authentication failed via Google', 401);
+    }
+
     const { googleId, name, email, avatar } = req.user;
+    console.log('[googleCallback] Processing Google user:', email);
 
     if (!email) {
       throw new AppError('Google account must have an email associated.', 400);

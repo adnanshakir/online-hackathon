@@ -5,13 +5,7 @@ import AppError from '../utils/appError.js';
 
 export const createService = async (req, res, next) => {
   try {
-    const {
-      name,
-      description,
-      type,
-      environment,
-      status,
-    } = req.body;
+    const { name, description, type, environment, status } = req.body;
 
     let service;
     try {
@@ -31,7 +25,7 @@ export const createService = async (req, res, next) => {
       throw err;
     }
 
-    await service.populate('createdBy', 'name email');
+    await service.populate('createdBy', 'name email avatar');
 
     return res.status(201).json(service);
   } catch (error) {
@@ -48,7 +42,7 @@ export const getServices = async (req, res, next) => {
 
     const [services, total] = await Promise.all([
       Service.find(query)
-        .populate('createdBy', 'name email')
+        .populate('createdBy', 'name email avatar')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit)),
@@ -75,7 +69,7 @@ export const getServiceById = async (req, res, next) => {
     const service = await Service.findOne({
       _id: req.params.id,
       workspace: req.user.workspace,
-    }).populate('createdBy', 'name email');
+    }).populate('createdBy', 'name email avatar');
 
     if (!service) {
       throw new AppError('Service not found', 404);
@@ -89,13 +83,7 @@ export const getServiceById = async (req, res, next) => {
 
 export const updateService = async (req, res, next) => {
   try {
-    const allowed = [
-      'name',
-      'description',
-      'type',
-      'environment',
-      'status',
-    ];
+    const allowed = ['name', 'description', 'type', 'environment', 'status'];
 
     const hasValidField = Object.keys(req.body).some((key) =>
       allowed.includes(key)
@@ -129,7 +117,7 @@ export const updateService = async (req, res, next) => {
       throw err;
     }
 
-    await service.populate('createdBy', 'name email');
+    await service.populate('createdBy', 'name email avatar');
 
     return res.status(200).json(service);
   } catch (error) {
@@ -159,10 +147,7 @@ export const updateServiceStatus = async (req, res, next) => {
     const allowed = ['operational', 'degraded', 'down', 'maintenance'];
 
     if (!allowed.includes(status)) {
-      throw new AppError(
-        `Invalid status. Allowed: ${allowed.join(', ')}`,
-        400
-      );
+      throw new AppError(`Invalid status. Allowed: ${allowed.join(', ')}`, 400);
     }
 
     // ✅ efficient update (best approach)
@@ -176,7 +161,7 @@ export const updateServiceStatus = async (req, res, next) => {
       throw new AppError('Service not found', 404);
     }
 
-    await service.populate('createdBy', 'name email');
+    await service.populate('createdBy', 'name email avatar');
 
     // Broadcast notification
     notifyWorkspace({

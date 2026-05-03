@@ -1,231 +1,270 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Bell, Zap } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/shared/Logo';
-import { StatusHero } from '@/components/status/StatusHero';
-import { ServiceCard } from '@/components/status/ServiceCard';
-import { UptimeChart } from '@/components/status/UptimeChart';
-import { PublicIncidentCard } from '@/components/status/PublicIncidentCard';
-import { PastIncidents } from '@/components/status/PastIncidents';
-import { SERVICES } from '@/data/services';
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion as _motion } from 'motion/react';
+const Motion = _motion;
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Info,
+  Activity,
+} from 'lucide-react';
+import { http } from '@/lib/api';
+import { formatDateTime, timeAgo } from '@/lib/format';
+import { Badge } from '@/components/ui/badge';
+import ReactMarkdown from 'react-markdown';
 import { APP_NAME } from '@/lib/constants';
-import * as api from '@/lib/api';
-
-/**
- * Normalize a backend incident into the shape every status component expects.
- */
-function normalizeIncident(raw) {
-  if (!raw) return null;
-  return {
-    id: raw._id || raw.id,
-    title: raw.title,
-    severity: raw.severity,
-    status: raw.status,
-    serviceIds: raw.service ? [raw.service] : [],
-    createdAt: raw.createdAt,
-    resolvedAt:
-      raw.status === 'resolved' ? raw.updatedAt || raw.createdAt : null,
-    updates: [], // public endpoint doesn't include the timeline
-  };
-}
-
-const SIM_TITLE = 'Investigating elevated error rate on checkout';
-const SIM_UPDATES = [
-  {
-    delay: 0,
-    status: 'investigating',
-    message: 'We are investigating reports of checkout failures.',
-  },
-  {
-    delay: 5000,
-    status: 'identified',
-    message: 'Identified an issue with the payment gateway integration.',
-  },
-  {
-    delay: 10000,
-    status: 'monitoring',
-    message: 'Fix deployed. Monitoring recovery.',
-  },
-  {
-    delay: 15000,
-    status: 'resolved',
-    message: 'The issue is resolved.',
-  },
-];
 
 export default function PublicStatus() {
-  const [active, setActive] = useState([]);
-  const [past, setPast] = useState([]);
+  const { teamSlug } = useParams();
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [, force] = useState(0);
+  const [error, setError] = useState(null);
 
-  // Fetch real public status. We don't need auth for this — the backend
-  // route is intentionally open. Refresh every 30s so a customer leaving
-  // the tab open sees state changes without a manual refresh.
   useEffect(() => {
-    let cancelled = false;
-    const fetchAll = async () => {
+    async function fetchStatus() {
       try {
-        const [statusResp, historyResp] = await Promise.all([
-          api.getPublicStatus(),
-          api.getStatusHistory(),
-        ]);
-        if (cancelled) return;
-        const activeRaw = statusResp?.data || statusResp || [];
-        const pastRaw = historyResp?.data || historyResp || [];
-        setActive(activeRaw.map(normalizeIncident).filter(Boolean));
-        setPast(pastRaw.map(normalizeIncident).filter(Boolean).slice(0, 12));
-      } catch (err) {
-        if (!cancelled) {
-          // eslint-disable-next-line no-console
-          console.error('Public status fetch failed:', err);
-        }
+        const response = await http.get(`/status/page/${teamSlug}`);
+        setData(response.data.data);
+      } catch {
+        setError('Status page not found or unavailable.');
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    };
-    fetchAll();
-    const t = setInterval(fetchAll, 30_000);
-    // Tick the "started X ago" labels on a faster cadence
-    const t2 = setInterval(() => force((n) => n + 1), 5_000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-      clearInterval(t2);
-    };
-  }, []);
-
-  const [simRunning, setSimRunning] = useState(false);
-
-  // Demo simulation logic
-  const runSimulation = async () => {
-    if (simRunning) return;
-    setSimRunning(true);
-    toast.info('Starting real-time simulation...');
-
-    for (const step of SIM_UPDATES) {
-      if (step.delay > 0) {
-        await new Promise((r) => setTimeout(r, 2000)); // Faster for demo
-      }
-      const fake = {
-        _id: 'sim-inc',
-        title: SIM_TITLE,
-        status: step.status,
-        severity: 'critical',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setActive([normalizeIncident(fake)]);
     }
+    if (teamSlug) {
+      fetchStatus();
+      const interval = setInterval(fetchStatus, 30_000);
+      return () => clearInterval(interval);
+    }
+  }, [teamSlug]);
 
-    toast.success('Simulation complete — system recovery confirmed.');
-    setTimeout(() => {
-      setSimRunning(false);
-      setActive([]);
-    }, 4000);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)]">
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--color-brand-primary)]" />
+      </div>
+    );
+  }
 
-  const allOperational = useMemo(
-    () => !loading && active.length === 0,
-    [loading, active.length]
-  );
+  if (error || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] text-[var(--color-foreground)]">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold">Not Found</h1>
+          <p className="text-[var(--color-muted)] mt-2">{error}</p>
+          <Link
+            to="/"
+            className="text-[var(--color-brand-primary)] hover:underline mt-4 inline-block"
+          >
+            Go to homepage
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const { settings, services, activeIncidents } = data;
+  const isAllOperational =
+    services.every((s) => s.status === 'operational') &&
+    activeIncidents.length === 0;
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)]">
-      {/* Top bar */}
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-background)]/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <Logo />
-            <span className="hidden text-xs text-[var(--color-muted)] md:inline">
-              / Status
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={runSimulation}
-              disabled={simRunning}
-              title="Demo only — runs a fake incident in real time"
-            >
-              <Zap
-                className={`h-3.5 w-3.5 ${simRunning ? 'animate-pulse text-amber-500' : ''}`}
+    <div
+      className={`min-h-screen ${settings.theme === 'light' ? 'bg-zinc-50 text-zinc-900' : 'bg-[#0A0A0A] text-zinc-50'} selection:bg-[var(--color-brand-primary)]/30`}
+    >
+      {/* Dynamic Theme Colors */}
+      <style>{`
+        :root {
+          --color-surface-status: ${settings.theme === 'light' ? '#ffffff' : '#121212'};
+          --color-border-status: ${settings.theme === 'light' ? '#e4e4e7' : '#27272a'};
+          --color-muted-status: ${settings.theme === 'light' ? '#71717a' : '#a1a1aa'};
+        }
+      `}</style>
+
+      {/* Header */}
+      <header className="border-b border-[var(--color-border-status)] bg-[var(--color-surface-status)]/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {settings.logo ? (
+              <img
+                src={settings.logo}
+                alt={settings.siteName}
+                className="h-8 w-8 rounded-md"
               />
-              {simRunning ? 'Simulating…' : 'Simulate incident'}
-            </Button>
-            <Button
-              variant="gradient"
-              size="sm"
-              onClick={() =>
-                toast.success('Subscribed!', {
-                  description: "You'll get an email when there's an update.",
-                })
-              }
-            >
-              <Bell className="h-3.5 w-3.5" />
-              Subscribe
-            </Button>
+            ) : (
+              <div className="h-8 w-8 rounded-md bg-[var(--color-brand-primary)] flex items-center justify-center">
+                <Activity className="h-5 w-5 text-black" />
+              </div>
+            )}
+            <h1 className="font-bold text-lg">{settings.siteName}</h1>
           </div>
+          {settings.showSubscribers && (
+            <button className="text-sm font-medium px-4 py-2 rounded-full bg-[var(--color-brand-primary)] text-black hover:bg-[var(--color-brand-secondary)] transition-colors">
+              Subscribe to Updates
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Hero */}
-      <StatusHero allOperational={allOperational} activeCount={active.length} />
+      <main className="max-w-4xl mx-auto px-6 py-12 space-y-12">
+        {/* Overall Status Banner */}
+        <Motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-6 md:p-8 rounded-2xl border-2 flex flex-col md:flex-row items-center gap-6 justify-between ${
+            isAllOperational
+              ? 'bg-[var(--color-brand-primary)]/10 border-[var(--color-brand-primary)]/30'
+              : 'bg-amber-500/10 border-amber-500/30'
+          }`}
+        >
+          <div className="flex items-center gap-4">
+            {isAllOperational ? (
+              <CheckCircle2 className="h-10 w-10 text-[var(--color-brand-primary)]" />
+            ) : (
+              <AlertTriangle className="h-10 w-10 text-amber-500" />
+            )}
+            <div>
+              <h2 className="text-2xl font-bold">
+                {isAllOperational
+                  ? 'All Systems Operational'
+                  : 'Some Systems Are Experiencing Issues'}
+              </h2>
+              <p className="text-[var(--color-muted-status)] mt-1">
+                Refreshed {timeAgo(new Date().toISOString())}
+              </p>
+            </div>
+          </div>
+        </Motion.div>
 
-      {/* Active incidents */}
-      {active.length > 0 && (
-        <section className="mx-auto max-w-5xl px-6 pb-10">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            Active incidents
-          </h2>
-          <div className="space-y-4">
-            {active.map((inc) => (
-              <PublicIncidentCard key={inc.id} incident={inc} />
+        {/* Public Announcement */}
+        {settings.announcement?.isActive && settings.announcement.message && (
+          <Motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div
+              className={`p-6 rounded-xl border ${
+                settings.announcement.type === 'critical'
+                  ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                  : settings.announcement.type === 'warning'
+                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                    : 'bg-blue-500/10 border-blue-500/30 text-blue-500'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 mt-0.5" />
+                <div className="prose prose-sm dark:prose-invert max-w-none text-current">
+                  <ReactMarkdown>{settings.announcement.message}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
+          </Motion.div>
+        )}
+
+        {/* Services Status */}
+        <Motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="space-y-4"
+        >
+          <h3 className="text-xl font-bold">System Status</h3>
+          <div className="rounded-xl border border-[var(--color-border-status)] bg-[var(--color-surface-status)] overflow-hidden divide-y divide-[var(--color-border-status)]">
+            {services.map((service) => (
+              <div
+                key={service._id}
+                className="p-4 flex items-center justify-between hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <div>
+                  <div className="font-medium">{service.name}</div>
+                  {service.description && (
+                    <div className="text-xs text-[var(--color-muted-status)] mt-0.5">
+                      {service.description}
+                    </div>
+                  )}
+                </div>
+                {service.status === 'operational' ? (
+                  <span className="text-sm font-medium text-[var(--color-brand-primary)] flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4" /> Operational
+                  </span>
+                ) : service.status === 'degraded' ? (
+                  <span className="text-sm font-medium text-amber-500 flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4" /> Degraded
+                  </span>
+                ) : (
+                  <span className="text-sm font-medium text-red-500 flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4" /> Outage
+                  </span>
+                )}
+              </div>
             ))}
+            {services.length === 0 && (
+              <div className="p-8 text-center text-[var(--color-muted-status)]">
+                No services configured yet.
+              </div>
+            )}
           </div>
-        </section>
-      )}
+        </Motion.div>
 
-      {/* Service grid — backend's /api/status doesn't yet return services,
-          so we fall back to the seeded SERVICES catalogue for now. Swap to
-          api.listServices() (or extend /api/status) once the backend ships
-          the workspace-public listing. */}
-      <section className="mx-auto max-w-5xl px-6 py-10">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-          Services
-        </h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((s, i) => (
-            <ServiceCard key={s.id} service={s} idx={i} />
-          ))}
-        </div>
-      </section>
+        {/* Active Incidents */}
+        {settings.showIncidents && activeIncidents.length > 0 && (
+          <Motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-4"
+          >
+            <h3 className="text-xl font-bold">Active Incidents</h3>
+            <div className="space-y-4">
+              {activeIncidents.map((inc) => (
+                <div
+                  key={inc._id}
+                  className="rounded-xl border border-[var(--color-border-status)] bg-[var(--color-surface-status)] p-6"
+                >
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <h4 className="text-lg font-bold">{inc.title}</h4>
+                    <Badge
+                      variant={
+                        inc.severity === 'critical'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                    >
+                      {inc.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-[var(--color-muted-status)] mb-4">
+                    Investigating since {formatDateTime(inc.createdAt)}
+                  </div>
+                  {inc.message && (
+                    <div className="prose prose-sm dark:prose-invert max-w-none p-4 rounded-lg bg-black/5 dark:bg-white/5">
+                      <ReactMarkdown>{inc.message}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Motion.div>
+        )}
+      </main>
 
-      {/* Uptime chart */}
-      <section className="mx-auto max-w-5xl px-6 py-6">
-        <UptimeChart days={90} />
-      </section>
-
-      {/* Past incidents */}
-      <section className="mx-auto max-w-5xl px-6 pb-12">
-        <PastIncidents incidents={past} />
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-[var(--color-border)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-6 text-xs text-[var(--color-muted)]">
-          <div>Powered by {APP_NAME}</div>
-          <div className="flex items-center gap-3">
-            <Link to="/" className="hover:text-[var(--color-foreground)]">
-              Home
-            </Link>
-            <Link to="/login" className="hover:text-[var(--color-foreground)]">
-              Login
-            </Link>
-          </div>
+      <footer className="border-t border-[var(--color-border-status)] mt-20">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-6 text-sm text-[var(--color-muted-status)]">
+          <p>
+            Powered by{' '}
+            <span className="font-bold text-[var(--color-brand-primary)]">
+              {APP_NAME}
+            </span>
+          </p>
+          <Link
+            to="/"
+            className="hover:text-[var(--color-brand-primary)] transition-colors"
+          >
+            Get your own status page
+          </Link>
         </div>
       </footer>
     </div>

@@ -57,7 +57,7 @@ export function AddUpdateForm({
       setHistory(message);
       setMessage(result.polished);
       toast.success('AI refined your update');
-    } catch (err) {
+    } catch {
       toast.error('AI Polish failed');
     } finally {
       setPolishing(false);

@@ -165,7 +165,11 @@ export function NewIncidentDialog({ open, onOpenChange }) {
       toast.success('Incident declared', { description: title });
       reset();
       onOpenChange(false);
-      navigate(`/app/incidents/${incident.id}`);
+      navigate(`/app/incidents/${incident.id || incident._id}`);
+    } catch (err) {
+      toast.error('Failed to declare incident.', {
+        description: err?.response?.data?.message || err.message,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -284,7 +288,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                     className={cn(
                       'group relative flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all',
                       active
-                        ? 'border-transparent bg-[var(--color-surface-elevated)] ring-2'
+                        ? 'border-transparent bg-[var(--color-surface-elevated)] ring-2 ring-inset'
                         : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-muted)]'
                     )}
                     style={active ? { '--tw-ring-color': s.color } : {}}
@@ -341,7 +345,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
                       className={cn(
                         'flex flex-col gap-1 rounded-xl border p-3 text-left transition-all',
                         active
-                          ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 ring-1 ring-[var(--color-brand-primary)]/30'
+                          ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 ring-1 ring-inset ring-[var(--color-brand-primary)]/30'
                           : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-muted)]'
                       )}
                     >

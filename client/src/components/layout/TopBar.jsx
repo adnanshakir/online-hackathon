@@ -1,11 +1,4 @@
-import {
-  Search,
-  Bell,
-  Sun,
-  Moon,
-  Plus,
-  Command as CommandIcon,
-} from 'lucide-react';
+import { Search, Sun, Moon, Plus, Command as CommandIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserMenu } from '@/components/shared/UserMenu';
 import { useThemeStore } from '@/store/themeStore';

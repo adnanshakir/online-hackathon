@@ -93,7 +93,13 @@ function toIncident(raw) {
     assigneeIds: (raw.assignedTo || []).map((u) => u?._id || u?.id || u),
     assigneeUsers: (raw.assignedTo || [])
       .filter((u) => typeof u === 'object')
-      .map((u) => ({ id: u._id, name: u.name, email: u.email })),
+      .map((u) => ({
+        id: u._id || u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        avatar: u.avatar,
+      })),
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
     resolvedAt: raw.status === 'resolved' ? raw.updatedAt : null,
@@ -232,7 +238,7 @@ export async function updateIncident(incidentId, patch) {
   return useIncidentsStore.getState().updateIncident(incidentId, patch);
 }
 
-export async function assignUsers(incidentId, assignedTo) {
+export async function assignResponders(incidentId, assignedTo) {
   if (isDemoMode()) {
     return useIncidentsStore.getState().updateIncident(incidentId, {
       assigneeIds: assignedTo,
@@ -607,3 +613,46 @@ export const auth = {
   me,
   googleAuthUrl,
 };
+
+/* ────────── Status Page Settings ────────── */
+
+export async function getStatusPageSettings() {
+  const { data } = await http.get('/workspace/status-page');
+  return data;
+}
+
+export async function updateStatusPageSettings(settings) {
+  const { data } = await http.patch('/workspace/status-page', settings);
+  return data;
+}
+
+/* ────────── AI ────────── */
+
+export async function suggestCauses(incidentData) {
+  const { data } = await http.post('/ai/suggest-causes', incidentData);
+  return data;
+}
+
+/* ────────── Notifications ────────── */
+
+export async function getNotifications(page = 1, limit = 20) {
+  const { data } = await http.get('/notifications', {
+    params: { page, limit },
+  });
+  return data;
+}
+
+export async function markNotificationRead(id) {
+  const { data } = await http.patch(`/notifications/${id}/read`);
+  return data;
+}
+
+export async function markAllNotificationsRead() {
+  const { data } = await http.patch('/notifications/read-all');
+  return data;
+}
+
+/** Returns the full SSE URL (not an axios call — used with EventSource). */
+export function getNotificationStreamUrl() {
+  return '/api/notifications/stream';
+}

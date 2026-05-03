@@ -24,25 +24,6 @@ export function ActionsCard({ incident, onClose }) {
       </h3>
       <div className="mt-3 space-y-2">
         <Button
-          asChild={isResolved}
-          variant={isResolved ? 'gradient' : 'outline'}
-          size="sm"
-          className="w-full justify-start"
-          disabled={!isResolved}
-        >
-          {isResolved ? (
-            <Link to={`/app/incidents/${incident.id}/postmortem`}>
-              <FileText className="h-3.5 w-3.5" />
-              Generate postmortem
-            </Link>
-          ) : (
-            <>
-              <FileText className="h-3.5 w-3.5" />
-              Postmortem (resolve first)
-            </>
-          )}
-        </Button>
-        <Button
           variant="outline"
           size="sm"
           className="w-full justify-start"

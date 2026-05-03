@@ -22,7 +22,8 @@ export const streamNotifications = async (req, res) => {
   res.flushHeaders();
 
   const userId = req.user._id.toString();
-  const workspaceId = req.user.workspace?._id?.toString() || req.user.workspace?.toString();
+  const workspaceId =
+    req.user.workspace?._id?.toString() || req.user.workspace?.toString();
 
   // Retry hint: Tell the client to reconnect after 10 seconds if connection drops
   res.write('retry: 10000\n\n');
@@ -38,7 +39,9 @@ export const streamNotifications = async (req, res) => {
       }
     } catch (err) {
       logger.error('[SSE ERROR]', err);
-      res.write(`event: error\ndata: ${JSON.stringify({ message: 'Error processing notification' })}\n\n`);
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ message: 'Error processing notification' })}\n\n`
+      );
     }
   };
 
@@ -143,7 +146,9 @@ export const markAllAsRead = async (req, res, next) => {
       { isRead: true }
     );
 
-    return res.status(200).json({ message: 'All notifications marked as read' });
+    return res
+      .status(200)
+      .json({ message: 'All notifications marked as read' });
   } catch (error) {
     return next(error);
   }
@@ -168,7 +173,8 @@ const validateNotificationPayload = (payload) => {
 export const notifyUser = async (payload) => {
   try {
     validateNotificationPayload(payload);
-    const { recipientId, actorId, workspaceId, type, title, message, link } = payload;
+    const { recipientId, actorId, workspaceId, type, title, message, link } =
+      payload;
 
     if (!recipientId || !mongoose.Types.ObjectId.isValid(recipientId)) {
       throw new Error('Invalid or missing recipient ID');
@@ -203,11 +209,9 @@ export const notifyWorkspace = async (payload) => {
 
     // Find all users in this workspace efficiently
     const members = await User.find({ workspace: wsId }).select('_id').lean();
-    
-    // Filter out the actor and validate IDs
-    const recipientIds = members
-      .map(m => m._id.toString())
-      .filter(id => id !== actId);
+
+    // Include everyone (including the actor) for workspace-wide events
+    const recipientIds = members.map((m) => m._id.toString());
 
     if (recipientIds.length === 0) return;
 
@@ -222,7 +226,8 @@ export const notifyWorkspace = async (payload) => {
     }));
 
     // Batch insert for performance
-    const createdNotifications = await Notification.insertMany(notificationsData);
+    const createdNotifications =
+      await Notification.insertMany(notificationsData);
 
     // Emit events after database sync
     createdNotifications.forEach((n) => {

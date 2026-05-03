@@ -167,13 +167,26 @@ export const getWorkspace = async (req, res, next) => {
 export const getWorkspaceMembers = async (req, res, next) => {
   try {
     const members = await User.find({ workspace: req.user.workspace })
-      .select('_id name email role')
+      .select('_id name email role avatar')
       .lean();
 
     const rolePriority = { owner: 1, admin: 2, member: 3 };
     members.sort((a, b) => rolePriority[a.role] - rolePriority[b.role]);
 
-    return res.status(200).json({ data: members });
+    const workspace = await Workspace.findById(req.user.workspace).lean();
+    const pendingInvites = (workspace?.invites || [])
+      .filter((i) => i.status === 'pending')
+      .map((i) => ({
+        _id: `pending-${i.email}`,
+        name: i.email.split('@')[0],
+        email: i.email,
+        role: i.role,
+        avatar: null,
+        status: 'invited',
+        isPending: true,
+      }));
+
+    return res.status(200).json({ data: [...members, ...pendingInvites] });
   } catch (error) {
     return next(error);
   }
@@ -228,6 +241,19 @@ export const inviteMember = async (req, res, next) => {
       config.ACCESS_TOKEN_SECRET,
       { expiresIn: '7d' }
     );
+
+    // Save invite to workspace for UI visibility
+    const alreadyInvited = workspace.invites?.find(
+      (i) => i.email === email && i.status === 'pending'
+    );
+    if (!alreadyInvited) {
+      workspace.invites.push({
+        email,
+        role: req.body.role || 'member',
+        invitedBy: req.user._id,
+      });
+      await workspace.save();
+    }
 
     // Attempt to send invite email — if mail fails (e.g. OAuth token expired),
     // still return success with the invite code so the user can share it manually.
@@ -336,6 +362,84 @@ export const updateWorkspaceContext = async (req, res, next) => {
     await workspace.save();
 
     return res.status(200).json(workspace.systemContext);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getStatusPageSettings = async (req, res, next) => {
+  try {
+    const workspaceId = req.user.workspace._id || req.user.workspace;
+    const workspace =
+      await Workspace.findById(workspaceId).select('statusPageSettings');
+
+    if (!workspace) {
+      throw new AppError('Workspace not found', 404);
+    }
+
+    // Initialize with defaults if missing
+    if (!workspace.statusPageSettings) {
+      workspace.statusPageSettings = {
+        siteName: 'OpsWatch Status',
+        theme: 'dark',
+        showUptime: true,
+        showIncidents: true,
+        showSubscribers: true,
+      };
+      await workspace.save();
+    }
+
+    return res.status(200).json(workspace.statusPageSettings);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const updateStatusPageSettings = async (req, res, next) => {
+  try {
+    if (!['owner', 'admin'].includes(req.user.role)) {
+      throw new AppError('Forbidden', 403);
+    }
+
+    const workspaceId = req.user.workspace._id || req.user.workspace;
+    const workspace = await Workspace.findById(workspaceId);
+
+    if (!workspace) {
+      throw new AppError('Workspace not found', 404);
+    }
+
+    // Basic slug unique check if slug is changing
+    if (req.body.slug && req.body.slug !== workspace.statusPageSettings?.slug) {
+      const existing = await Workspace.findOne({
+        'statusPageSettings.slug': req.body.slug.toLowerCase(),
+        _id: { $ne: workspaceId },
+      });
+      if (existing) {
+        throw new AppError('Status page slug is already taken', 400);
+      }
+    }
+
+    // Merge settings
+    const current = workspace.statusPageSettings
+      ? workspace.statusPageSettings.toObject()
+      : {};
+    workspace.statusPageSettings = {
+      ...current,
+      ...req.body,
+      // Deep merge for announcement
+      announcement: {
+        ...(current.announcement || {}),
+        ...(req.body.announcement || {}),
+      },
+      // Deep merge for insights to prevent overwriting with mocks
+      insights: {
+        ...(current.insights || { visitors24h: 0, subscribers: 0 }),
+        ...(req.body.insights || {}),
+      },
+    };
+
+    await workspace.save();
+    return res.status(200).json(workspace.statusPageSettings);
   } catch (error) {
     return next(error);
   }
