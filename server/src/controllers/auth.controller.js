@@ -11,8 +11,8 @@ import {
 
 const cookieOptions = {
   httpOnly: true,
-  sameSite: config.NODE_ENV === 'production' ? 'none' : 'lax',
-  secure: config.NODE_ENV === 'production',
+  sameSite: 'none',
+  secure: true,
 };
 
 const generateTokens = async (user) => {
