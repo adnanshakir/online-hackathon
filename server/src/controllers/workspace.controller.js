@@ -51,7 +51,7 @@ export const joinWorkspace = async (req, res, next) => {
     if (token) {
       try {
         const decoded = jwt.verify(token, config.ACCESS_TOKEN_SECRET);
-        
+
         // Ensure the invite is for the currently logged in user
         if (decoded.email !== req.user.email) {
           throw new AppError(
@@ -59,7 +59,7 @@ export const joinWorkspace = async (req, res, next) => {
             403
           );
         }
-        
+
         targetInviteCode = decoded.inviteCode;
       } catch (error) {
         if (error instanceof AppError) throw error;
@@ -78,13 +78,13 @@ export const joinWorkspace = async (req, res, next) => {
     req.user.role = 'member';
     await req.user.save();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       message: 'Joined workspace successfully',
       workspace: {
         id: workspace._id,
         name: workspace.name,
-        slug: workspace.slug
-      }
+        slug: workspace.slug,
+      },
     });
   } catch (error) {
     return next(error);
@@ -209,24 +209,39 @@ export const inviteMember = async (req, res, next) => {
 
     // Generate a secure invite token tied to the email
     const inviteToken = jwt.sign(
-      { 
-        email, 
-        workspaceId: workspace._id, 
-        inviteCode: workspace.inviteCode 
+      {
+        email,
+        workspaceId: workspace._id,
+        inviteCode: workspace.inviteCode,
       },
       config.ACCESS_TOKEN_SECRET,
       { expiresIn: '7d' }
     );
 
-    await sendWorkspaceInvite(
-      email,
-      req.user.name,
-      workspace.name,
-      workspace.inviteCode,
-      inviteToken
-    );
+    // Attempt to send invite email — if mail fails (e.g. OAuth token expired),
+    // still return success with the invite code so the user can share it manually.
+    let emailSent = true;
+    try {
+      await sendWorkspaceInvite(
+        email,
+        req.user.name,
+        workspace.name,
+        workspace.inviteCode,
+        inviteToken
+      );
+    } catch (mailError) {
+      emailSent = false;
+      // Log the mail error but don't crash the endpoint
+      console.error('[inviteMember] Failed to send email:', mailError?.message);
+    }
 
-    return res.status(200).json({ message: 'Invitation sent' });
+    return res.status(200).json({
+      message: emailSent
+        ? 'Invitation sent'
+        : 'Could not send email — share this invite code manually',
+      inviteCode: workspace.inviteCode,
+      emailSent,
+    });
   } catch (error) {
     return next(error);
   }

@@ -31,7 +31,7 @@ export const strictLimiter = rateLimit({
 // ─── Global API — basic protection ────────────────
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 2000, // Increased for real-time polling
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -45,7 +45,7 @@ export const globalLimiter = rateLimit({
 // ─── Authenticated API — track by User ID ─────────
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 500,
+  max: 2000, // Increased for real-time polling
   handler: (req, res) => {
     res.status(429).json({
       success: false,
@@ -57,8 +57,7 @@ export const apiLimiter = rateLimit({
   skip: (req) => req.path === '/health',
 
   // Use user ID if authenticated, fallback to IP
-  keyGenerator: (req) =>
-    req.user?._id?.toString() || ipKeyGenerator(req),
+  keyGenerator: (req) => req.user?._id?.toString() || ipKeyGenerator(req),
 
   standardHeaders: true,
   legacyHeaders: false,

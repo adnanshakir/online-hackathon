@@ -13,7 +13,12 @@ export function Timeline({ updates = [] }) {
         aria-hidden
       />
       {updates.map((u, idx) => {
-        const author = u.createdBy || getUserById(u.authorId);
+        // Fallback chain: Populated object -> Mock data -> Direct name field
+        const author = u.createdBy ||
+          getUserById(u.authorId) || {
+            name: u.authorName,
+            email: u.authorEmail,
+          };
         const isLast = idx === updates.length - 1;
         return (
           <Motion.li

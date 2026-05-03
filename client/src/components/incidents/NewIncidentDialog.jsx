@@ -25,6 +25,7 @@ import * as api from '@/lib/api';
 export function NewIncidentDialog({ open, onOpenChange }) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
+  const [prevTitle, setPrevTitle] = useState(null);
   const [description, setDescription] = useState('');
   const [prevDescription, setPrevDescription] = useState(null); // for undo
   const [severity, setSeverity] = useState('high');
@@ -39,6 +40,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
 
   const reset = () => {
     setTitle('');
+    setPrevTitle(null);
     setDescription('');
     setPrevDescription(null);
     setSeverity('high');
@@ -70,7 +72,7 @@ export function NewIncidentDialog({ open, onOpenChange }) {
     setArr(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
   };
 
-  /* ── AI: polish description ── */
+  /* ── AI: polish title + description ── */
   const handlePolish = async () => {
     if (!description.trim()) {
       toast.error('Write a description first.');
@@ -78,15 +80,22 @@ export function NewIncidentDialog({ open, onOpenChange }) {
     }
     setPolishing(true);
     try {
-      const { polished, source } = await polishDescription(title, description);
-      setPrevDescription(description); // save for undo
+      const { polished, polishedTitle, source } = await polishDescription(
+        title,
+        description
+      );
+      setPrevDescription(description);
+      setPrevTitle(title);
       setDescription(polished);
-      toast.success('Description polished', {
+      setTitle(polishedTitle);
+      toast.success('Incident details polished', {
         description:
-          source === 'gemini' ? 'Powered by Gemini' : 'AI-enhanced locally',
+          source === 'gemini'
+            ? 'Headline and description refined by Gemini'
+            : 'AI-enhanced locally',
       });
     } catch (err) {
-      toast.error('Could not polish description.', {
+      toast.error('Could not polish details.', {
         description: err.message,
       });
     } finally {
@@ -98,8 +107,12 @@ export function NewIncidentDialog({ open, onOpenChange }) {
     if (prevDescription !== null) {
       setDescription(prevDescription);
       setPrevDescription(null);
-      toast.info('Description restored.');
     }
+    if (prevTitle !== null) {
+      setTitle(prevTitle);
+      setPrevTitle(null);
+    }
+    toast.info('Changes reverted.');
   };
 
   /* ── AI: root cause suggestions ── */
@@ -304,42 +317,61 @@ export function NewIncidentDialog({ open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Affected service — REQUIRED dropdown */}
-          <div className="space-y-2">
+          {/* Affected service — REQUIRED cards */}
+          <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <Label>Affected Service</Label>
+              <Label className="text-sm font-bold">Affected Service</Label>
               <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-brand-primary)]">
                 Required
               </span>
             </div>
-            <select
-              value={selectedService || ''}
-              onChange={(e) => setSelectedService(e.target.value)}
-              className={cn(
-                'h-11 w-full rounded-lg border bg-[var(--color-surface)] px-3 text-sm font-medium transition-all focus:outline-none focus:ring-2',
-                selectedService
-                  ? 'border-[var(--color-brand-primary)]/50 focus:ring-[var(--color-brand-primary)]/20'
-                  : 'border-[var(--color-border)] focus:ring-[var(--color-ring)]'
-              )}
-            >
-              <option value="" disabled>
-                Select the affected service…
-              </option>
-              {availableServices.map((s) => (
-                <option key={s._id} value={s._id}>
-                  {s.name} ({s.type})
-                </option>
-              ))}
-            </select>
-            {availableServices.length === 0 && (
-              <p className="text-[10px] text-amber-500">
+            {availableServices.length === 0 ? (
+              <p className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-500">
                 No services found. Please create a service first in Settings.
               </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                {availableServices.map((s) => {
+                  const active = selectedService === s._id;
+                  return (
+                    <button
+                      key={s._id}
+                      type="button"
+                      onClick={() => setSelectedService(s._id)}
+                      className={cn(
+                        'flex flex-col gap-1 rounded-xl border p-3 text-left transition-all',
+                        active
+                          ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 ring-1 ring-[var(--color-brand-primary)]/30'
+                          : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-muted)]'
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex size-7 items-center justify-center rounded-lg bg-[var(--color-surface-elevated)] text-[10px] font-bold text-[var(--color-muted)]">
+                          {s.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        {active && (
+                          <div className="size-4 rounded-full bg-[var(--color-brand-primary)] p-0.5">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-1">
+                        <div className="truncate text-xs font-semibold">
+                          {s.name}
+                        </div>
+                        <div className="text-[10px] text-[var(--color-muted)] uppercase tracking-tight">
+                          {s.type}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
 
           {/* Responders — real workspace users */}
-          <div className="space-y-2">
+          <div className="space-y-3 pt-2">
             <Label>Responders</Label>
             {workspaceUsers.length === 0 ? (
               <p className="text-[11px] text-[var(--color-muted)]">

@@ -322,7 +322,7 @@ export async function postUpdate(incidentId, update) {
 export async function listUsers() {
   if (isDemoMode()) return USERS;
   try {
-    const { data } = await http.get('/workspace/users');
+    const { data } = await http.get('/workspace/members');
     // Backend returns array of { _id, name, email, role, avatar }
     return (data || []).map((u) => ({
       id: u._id || u.id,
@@ -394,7 +394,10 @@ export const workspace = {
   create: createWorkspace,
   join: joinWorkspace,
   invite: (payload) => http.post('/workspace/invite', payload),
-  listUsers: () => http.get('/workspace/users').then((res) => res.data),
+  listUsers: () =>
+    http
+      .get('/workspace/members')
+      .then((res) => res.data?.data || res.data || []),
   updateRole: (payload) => http.patch('/workspace/role', payload),
   getMe: () => http.get('/workspace/me').then((res) => res.data),
   regenerateInviteCode: () =>

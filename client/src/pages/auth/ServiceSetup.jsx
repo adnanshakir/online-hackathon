@@ -33,47 +33,10 @@ import { services } from '@/lib/api';
 import { AmbientGlow } from '@/components/shared/AmbientGlow';
 import { cn } from '@/lib/utils';
 
-const SERVICE_TYPES = [
-  { id: 'frontend', name: 'Frontend', icon: Monitor, color: 'bg-indigo-500' },
-  { id: 'backend', name: 'Backend', icon: Server, color: 'bg-emerald-500' },
-  { id: 'database', name: 'Database', icon: HardDrive, color: 'bg-amber-500' },
-  { id: 'infra', name: 'Infrastructure', icon: Shield, color: 'bg-rose-500' },
-];
-
 const ENVIRONMENTS = [
   { id: 'production', name: 'Production', color: 'bg-rose-500' },
   { id: 'staging', name: 'Staging', color: 'bg-amber-500' },
   { id: 'dev', name: 'Development', color: 'bg-blue-500' },
-];
-
-const TEMPLATES = [
-  {
-    id: 'api',
-    name: 'Core API Server',
-    type: 'backend',
-    techStack: 'Node.js, Express, MongoDB',
-    environment: 'production',
-    description: 'Main production API for user data and business logic.',
-    icon: Server,
-  },
-  {
-    id: 'frontend',
-    name: 'React Dashboard',
-    type: 'frontend',
-    techStack: 'React, Tailwind, Vite',
-    environment: 'production',
-    description: 'Primary customer-facing management interface.',
-    icon: Monitor,
-  },
-  {
-    id: 'db',
-    name: 'Primary Database',
-    type: 'database',
-    techStack: 'PostgreSQL, Redis',
-    environment: 'production',
-    description: 'High-availability data store for critical operations.',
-    icon: Database,
-  },
 ];
 
 export default function ServiceSetup() {
@@ -89,20 +52,6 @@ export default function ServiceSetup() {
     repoUrl: '',
     liveUrl: '',
   });
-
-  const applyTemplate = (template) => {
-    setFormData({
-      ...formData,
-      name: template.name,
-      type: template.type,
-      techStack: template.techStack,
-      environment: template.environment,
-      description: template.description,
-    });
-    toast.success(`${template.name} template applied!`, {
-      description: 'You can still edit the details below.',
-    });
-  };
 
   const updateForm = (key, val) =>
     setFormData((prev) => ({ ...prev, [key]: val }));
@@ -194,111 +143,51 @@ export default function ServiceSetup() {
                 variants={fadeUp}
                 className="mt-8 space-y-8 rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] p-8 shadow-2xl"
               >
-                {/* Templates Section */}
-                <div>
-                  <label className="mb-3 block text-[10px] font-bold uppercase tracking-widest text-[var(--color-muted-strong)]">
-                    Quick Start Templates
-                  </label>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                    {TEMPLATES.map((t) => {
-                      const Icon = t.icon;
-                      return (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => applyTemplate(t)}
-                          className={cn(
-                            'group relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-4 text-left transition-all hover:border-[var(--color-brand-primary)]/50 hover:bg-[var(--color-brand-primary)]/5',
-                            formData.name === t.name &&
-                              'border-[var(--color-brand-primary)] ring-1 ring-[var(--color-brand-primary)]/50'
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="grid size-10 place-items-center rounded-lg bg-[var(--color-surface-elevated)] transition-all group-hover:bg-[var(--color-brand-primary)]/20">
-                              <Motion.div
-                                whileHover={{ scale: 1.1, rotate: 5 }}
-                                transition={{
-                                  type: 'spring',
-                                  stiffness: 400,
-                                  damping: 10,
-                                }}
-                              >
-                                <Icon className="h-5 w-5 text-[var(--color-muted)] transition-colors group-hover:text-[var(--color-brand-primary)]" />
-                              </Motion.div>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-[11px] font-bold text-[var(--color-foreground)] transition-colors group-hover:text-[var(--color-brand-primary)]">
-                                {t.name}
-                              </div>
-                              <div className="mt-0.5 truncate text-[9px] text-[var(--color-muted)]">
-                                {t.techStack}
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                {/* Simplified Header */}
+                <div className="flex items-center gap-4 rounded-xl bg-[var(--color-brand-primary)]/5 p-4 border border-[var(--color-brand-primary)]/10">
+                  <div className="flex size-12 items-center justify-center rounded-lg bg-[var(--color-brand-primary)]/20 text-[var(--color-brand-primary)]">
+                    <Globe className="h-6 w-6" />
                   </div>
-                  <div className="mt-6 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-[var(--color-border)]" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-muted-strong)]">
-                      Or enter manually
-                    </span>
-                    <div className="h-px flex-1 bg-[var(--color-border)]" />
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--color-foreground)]">
+                      Full Website Stack
+                    </h3>
+                    <p className="text-xs text-[var(--color-muted)]">
+                      Unified management for Frontend, Backend, Database, and
+                      Infra.
+                    </p>
                   </div>
                 </div>
 
                 {/* Name */}
                 <div className="space-y-3">
-                  <Label>Service Name</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-muted)]">
+                    What is the name of this project?
+                  </Label>
                   <Input
-                    placeholder="e.g. Primary API Cluster"
+                    placeholder="e.g. My Awesome Website"
                     value={formData.name}
                     onChange={(e) => updateForm('name', e.target.value)}
-                    className="h-12 bg-[var(--color-background)]"
+                    className="h-14 bg-[var(--color-background)] text-lg border-[var(--color-border-strong)] focus:border-[var(--color-brand-primary)]"
                   />
-                </div>
-
-                {/* Type */}
-                <div className="space-y-3">
-                  <Label>Service Type</Label>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {SERVICE_TYPES.map((t) => {
-                      const Icon = t.icon;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => updateForm('type', t.id)}
-                          className={cn(
-                            'flex flex-col items-center gap-2 rounded-xl border p-4 transition-all',
-                            formData.type === t.id
-                              ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
-                              : 'border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-surface-elevated)]'
-                          )}
-                        >
-                          <Icon className="size-5" />
-                          <span className="text-[11px] font-bold uppercase tracking-tight">
-                            {t.name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
 
                 {/* Environment */}
                 <div className="space-y-3">
-                  <Label>Environment</Label>
-                  <div className="flex flex-wrap gap-3">
+                  <Label className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-muted)]">
+                    Target Environment
+                  </Label>
+                  <div className="grid grid-cols-3 gap-3">
                     {ENVIRONMENTS.map((e) => (
                       <button
                         key={e.id}
+                        type="button"
                         onClick={() => updateForm('environment', e.id)}
                         className={cn(
-                          'flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-all',
+                          'flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-bold transition-all',
                           formData.environment === e.id
-                            ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
-                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-muted)]'
+                            ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] ring-1 ring-[var(--color-brand-primary)]'
+                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-muted)] hover:bg-[var(--color-surface-elevated)]'
                         )}
                       >
                         <span className={cn('size-2 rounded-full', e.color)} />
@@ -310,14 +199,23 @@ export default function ServiceSetup() {
 
                 <Button
                   variant="gradient"
+                  size="lg"
                   onClick={() => {
                     if (!formData.name)
                       return toast.error('Please name your service');
+                    // Ensure full stack defaults are set if they were bypassed
+                    setFormData((prev) => ({
+                      ...prev,
+                      type: 'backend', // canonical type for full stack in backend
+                      techStack:
+                        prev.techStack ||
+                        'Frontend, Backend, Database, Cloud Infra',
+                    }));
                     setStep(2);
                   }}
-                  className="w-full h-12"
+                  className="w-full h-14 rounded-xl text-base font-bold shadow-lg shadow-[var(--color-brand-primary)]/10"
                 >
-                  Continue to Details <ArrowRight className="ml-2 h-4 w-4" />
+                  Continue to Details <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Motion.div>
             </Motion.div>

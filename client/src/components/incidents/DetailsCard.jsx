@@ -22,26 +22,36 @@ export function DetailsCard({ incident }) {
           <dt className="text-[var(--color-muted)] text-xs">Created by</dt>
           <dd className="flex items-center gap-1.5">
             {author && <Avatar user={author} size="xs" />}
-            <span className="text-xs">{author?.name || 'Unknown'}</span>
+            <span className="text-xs">
+              {author?.name || incident.createdByName || 'Unknown'}
+            </span>
           </dd>
         </div>
         <div className="flex items-center justify-between gap-2">
           <dt className="text-[var(--color-muted)] text-xs">Opened</dt>
-          <dd className="text-xs tabular-nums" title={formatDateTime(incident.createdAt)}>
+          <dd
+            className="text-xs tabular-nums"
+            title={formatDateTime(incident.createdAt)}
+          >
             {timeAgo(incident.createdAt)}
           </dd>
         </div>
         {incident.resolvedAt && (
           <div className="flex items-center justify-between gap-2">
             <dt className="text-[var(--color-muted)] text-xs">Resolved</dt>
-            <dd className="text-xs tabular-nums" title={formatDateTime(incident.resolvedAt)}>
+            <dd
+              className="text-xs tabular-nums"
+              title={formatDateTime(incident.resolvedAt)}
+            >
               {timeAgo(incident.resolvedAt)}
             </dd>
           </div>
         )}
         {incident.affectedUsers > 0 && (
           <div className="flex items-center justify-between gap-2">
-            <dt className="text-[var(--color-muted)] text-xs">Affected users</dt>
+            <dt className="text-[var(--color-muted)] text-xs">
+              Affected users
+            </dt>
             <dd className="text-xs tabular-nums">
               {incident.affectedUsers.toLocaleString()}
             </dd>

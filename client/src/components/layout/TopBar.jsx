@@ -1,8 +1,16 @@
-import { Search, Bell, Sun, Moon, Plus, Command as CommandIcon } from 'lucide-react';
+import {
+  Search,
+  Bell,
+  Sun,
+  Moon,
+  Plus,
+  Command as CommandIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserMenu } from '@/components/shared/UserMenu';
 import { useThemeStore } from '@/store/themeStore';
 import { useUIStore } from '@/store/uiStore';
+import { NotificationsMenu } from './NotificationsMenu';
 import { cn } from '@/lib/utils';
 
 export function TopBar() {
@@ -12,8 +20,8 @@ export function TopBar() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[var(--color-border)] ' +
-          'bg-[var(--color-background)]/70 px-4 backdrop-blur-xl md:px-6'
+        'sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-[var(--color-border)] ' +
+          'bg-[var(--color-background)]/80 px-4 backdrop-blur-xl md:px-6'
       )}
     >
       {/* Search trigger — opens command palette */}
@@ -37,7 +45,7 @@ export function TopBar() {
         </span>
       </button>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-2">
         <Button
           variant="gradient"
           size="sm"
@@ -48,15 +56,7 @@ export function TopBar() {
           New incident
         </Button>
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Notifications"
-          className="relative"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-500 ring-2 ring-[var(--color-background)]" />
-        </Button>
+        <NotificationsMenu />
 
         <Button
           variant="ghost"
@@ -64,7 +64,11 @@ export function TopBar() {
           onClick={toggleTheme}
           aria-label="Toggle theme"
         >
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
         </Button>
 
         <div className="ml-2">

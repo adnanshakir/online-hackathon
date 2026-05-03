@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { fadeUp, stagger } from '@/components/motion/variants';
+import { InviteMemberDialog } from '@/components/shared/InviteMemberDialog';
 import { cn } from '@/lib/utils';
 import * as api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
@@ -48,10 +49,6 @@ export default function Team() {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('member');
-  const [sending, setSending] = useState(false);
-
   const fetchMembers = useCallback(async () => {
     try {
       const data = await api.workspace.listUsers();
@@ -66,23 +63,6 @@ export default function Team() {
   useEffect(() => {
     fetchMembers();
   }, [fetchMembers]);
-
-  const handleInvite = async () => {
-    if (!inviteEmail) return;
-    setSending(true);
-    try {
-      await api.workspace.invite({ email: inviteEmail, role: inviteRole });
-      toast.success('Invite sent', {
-        description: `An invitation was sent to ${inviteEmail}`,
-      });
-      setInviteEmail('');
-      setOpen(false);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send invite');
-    } finally {
-      setSending(false);
-    }
-  };
 
   const handleUpdateRole = async (userId, newRole) => {
     try {
@@ -210,70 +190,7 @@ export default function Team() {
           ))}
         </Motion.div>
       )}
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Invite a teammate</DialogTitle>
-            <DialogDescription>
-              Send an email invitation. They'll join your workspace instantly.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-6 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                autoFocus
-                type="email"
-                placeholder="colleague@company.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-3">
-              <Label>Role</Label>
-              <div className="grid gap-2">
-                {ROLE_OPTIONS.map((role) => (
-                  <button
-                    key={role.value}
-                    onClick={() => setInviteRole(role.value)}
-                    className={cn(
-                      'flex flex-col items-start rounded-lg border p-3 text-left transition-all hover:bg-[var(--color-surface-elevated)]',
-                      inviteRole === role.value
-                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
-                        : 'border-[var(--color-border)]'
-                    )}
-                  >
-                    <span className="text-sm font-semibold">{role.label}</span>
-                    <span className="text-xs text-[var(--color-muted)]">
-                      {role.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="gradient"
-              disabled={!inviteEmail || sending}
-              onClick={handleInvite}
-            >
-              {sending ? (
-                'Sending...'
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" /> Send invite
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InviteMemberDialog open={open} onOpenChange={setOpen} />
     </Motion.div>
   );
 }

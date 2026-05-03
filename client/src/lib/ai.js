@@ -323,25 +323,37 @@ export async function regeneratePostmortem() {
 }
 
 /**
- * Polish/improve an incident description using AI.
- * Falls back to a prompt-augmented local rewrite if no Gemini key.
+ * Technical polish for an incident headline and description using AI.
+ * Returns a JSON object with improved spelling, grammar, and technical tone.
  */
-export async function polishDescription(title, description) {
+export async function polishDescription(arg1, arg2) {
+  // Handle case where only one argument is passed (use it as description)
+  let title = arg2 ? arg1 : '';
+  let description = arg2 ? arg2 : arg1;
+
+  if (!description)
+    return { polished: '', polishedTitle: title, source: 'local' };
+
   const key = import.meta.env.VITE_GEMINI_API_KEY;
 
   if (key) {
     try {
-      const prompt = `You are an expert SRE technical writer. Improve the following incident description to be clear, concise, and actionable for an on-call engineer.
+      const prompt = `You are a Principal Site Reliability Engineer (SRE). Your task is to transform the provided informal notes into a high-fidelity, professional, and authoritative incident update.
 
-Incident title: ${title || '(untitled)'}
-Current description: ${description}
+CONTEXT:
+${title ? `Incident Title: ${title}` : 'General incident update'}
 
-Rules:
-- Keep it under 3 sentences
-- Mention symptoms, scope, and observed signals
-- Use technical but plain English
-- Do NOT add headers or markdown
-- Return ONLY the improved description text, nothing else`;
+INPUT MESSAGE:
+"${description}"
+
+RULES:
+1. Tone: Professional, calm, technical, and precise.
+2. Structure: Ensure the update is clear and actionable.
+3. Language: Fix all grammar, spelling, and punctuation.
+4. Content: Transform casual phrases into SRE-standard terminology (e.g., "starting work" -> "initiating investigation", "fixed it" -> "mitigation applied").
+5. Constraints: Return ONLY a valid JSON object with keys "title" (if context provided) and "description".
+
+Return only raw JSON. No markdown code blocks.`;
 
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
@@ -350,23 +362,64 @@ Rules:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3 },
+            generationConfig: {
+              temperature: 0.3,
+              responseMimeType: 'application/json',
+            },
           }),
         }
       );
       if (!res.ok) throw new Error(`Gemini ${res.status}`);
       const data = await res.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (text) return { polished: text, source: 'gemini' };
+      if (text) {
+        const parsed = JSON.parse(text);
+        return {
+          polished: parsed.description,
+          polishedTitle: parsed.title,
+          source: 'gemini',
+        };
+      }
     } catch (err) {
-      console.warn('[ai] gemini polish failed, using local:', err.message);
+      console.warn(
+        '[ai] gemini technical polish failed, using local:',
+        err.message
+      );
     }
   }
 
-  // Local fallback — deterministically enrich the description
-  await new Promise((r) => setTimeout(r, 900 + Math.random() * 600));
-  const base = description.trim();
-  const titleHint = title ? ` related to ${title}` : '';
-  const polished = `${base.endsWith('.') ? base : base + '.'} Issue${titleHint} is actively impacting users — scope and blast radius are being assessed. Engineers are investigating logs and monitoring dashboards for root cause signals.`;
-  return { polished, source: 'local' };
+  // Local fallback — deterministically enrich and fix common patterns
+  await new Promise((r) => setTimeout(r, 600 + Math.random() * 400));
+  const cleanTitle = (title || 'Incident Update').trim();
+  const base = (description || '').trim();
+
+  if (!base)
+    return { polished: '', polishedTitle: cleanTitle, source: 'local' };
+
+  const polishedTitle =
+    cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+
+  // Basic professionalization logic for local fallback
+  let polished = base.charAt(0).toUpperCase() + base.slice(1);
+  if (
+    polished.toLowerCase().includes('starting') ||
+    polished.toLowerCase().includes('working')
+  ) {
+    polished =
+      'Initiating investigation and assessing impact scope across affected services.';
+  } else if (
+    polished.toLowerCase().includes('fixed') ||
+    polished.toLowerCase().includes('done')
+  ) {
+    polished =
+      'Mitigation applied. Verifying service stability and monitoring for regression.';
+  } else {
+    polished = polished + (polished.endsWith('.') ? '' : '.');
+  }
+
+  return {
+    polished,
+    polishedTitle,
+    source: 'local',
+  };
 }
