@@ -77,9 +77,10 @@ export const sendWorkspaceInvite = async (
   email,
   inviterName,
   workspaceName,
-  inviteCode
+  inviteCode,
+  inviteToken
 ) => {
-  const joinLink = `${config.FRONTEND_URL}/login?inviteCode=${inviteCode}`;
+  const joinLink = `${config.FRONTEND_URL}/join?token=${inviteToken}`;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -91,6 +92,7 @@ export const sendWorkspaceInvite = async (
            Join Workspace
         </a>
       </div>
+      <p style="color: #666; font-size: 14px;">This invitation was sent to <strong>${email}</strong>.</p>
       <p style="color: #666; font-size: 14px;">Alternatively, you can use this invite code: <strong>${inviteCode}</strong></p>
       <p style="color: #999; font-size: 12px;">Welcome to the team!</p>
     </div>
