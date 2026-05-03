@@ -73,7 +73,7 @@ export const register = async (req, res, next) => {
       existingUser.lastVerificationSentAt = new Date();
 
       await existingUser.save({ validateBeforeSave: false });
-      await sendVerificationEmail(email, existingUser.name, verificationToken);
+      sendVerificationEmail(email, existingUser.name, verificationToken);
 
       return res.status(200).json({
         message:
@@ -99,7 +99,7 @@ export const register = async (req, res, next) => {
       lastVerificationSentAt: new Date(),
     });
 
-    await sendVerificationEmail(email, name, verificationToken);
+    sendVerificationEmail(email, name, verificationToken);
 
     const { accessToken, refreshToken } = await generateTokens(user);
 
@@ -492,7 +492,7 @@ export const resendVerificationEmail = async (req, res, next) => {
     user.lastVerificationSentAt = new Date();
 
     await user.save({ validateBeforeSave: false });
-    await sendVerificationEmail(email, user.name, verificationToken);
+    sendVerificationEmail(email, user.name, verificationToken);
 
     return res.status(200).json({
       message: 'Verification link sent successfully. Please check your inbox.',
