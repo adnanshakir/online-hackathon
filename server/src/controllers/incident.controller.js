@@ -2,6 +2,7 @@ import { Incident } from '../models/incident.model.js';
 import { Update } from '../models/update.model.js';
 import { User } from '../models/user.model.js';
 import { Service } from '../models/service.model.js';
+import { notifyWorkspace, notifyUser } from './notification.controller.js';
 import AppError from '../utils/appError.js';
 
 export const createIncident = async (req, res, next) => {
@@ -31,6 +32,17 @@ export const createIncident = async (req, res, next) => {
       { path: 'createdBy', select: 'name email avatar' },
       { path: 'service', select: 'name type environment' },
     ]);
+
+    // Broadcast notification to workspace members
+    notifyWorkspace({
+      actorId: req.user._id,
+      workspaceId: req.user.workspace,
+      type: 'incident',
+      title: 'New Incident Reported',
+      message: `${req.user.name} reported: ${title}`,
+      link: `/incidents/${incident._id}`,
+    });
+
     return res.status(201).json(incident);
   } catch (error) {
     return next(error);
@@ -137,6 +149,16 @@ export const updateIncidentStatus = async (req, res, next) => {
       createdBy: req.user._id,
     });
 
+    // Broadcast notification to workspace members
+    notifyWorkspace({
+      actorId: req.user._id,
+      workspaceId: req.user.workspace,
+      type: 'incident',
+      title: 'Incident Status Updated',
+      message: `"${incident.title}" is now ${status}`,
+      link: `/incidents/${incident._id}`,
+    });
+
     return res.status(200).json(incident);
   } catch (error) {
     return next(error);
@@ -171,18 +193,33 @@ export const assignUsers = async (req, res, next) => {
 
       // Assign only the IDs that actually exist in our DB
       incident.assignedTo = validUsers.map((u) => u._id);
+      await incident.save();
+
+      // Log assignment update
+      await Update.create({
+        incident: incident._id,
+        workspace: req.user.workspace,
+        message: 'Users assigned/updated',
+        type: 'log',
+        createdBy: req.user._id,
+      });
+
+      // Notify all assigned users
+      validUsers.forEach((user) => {
+        // Don't notify the person who did the assigning if they assigned themselves
+        if (user._id.toString() !== req.user._id.toString()) {
+          notifyUser({
+            recipientId: user._id,
+            actorId: req.user._id,
+            workspaceId: req.user.workspace,
+            type: 'incident',
+            title: 'You have been assigned to an incident',
+            message: `Incident: ${incident.title}`,
+            link: `/incidents/${incident._id}`,
+          });
+        }
+      });
     }
-
-    await incident.save();
-
-    // Log assignment update
-    await Update.create({
-      incident: incident._id,
-      workspace: req.user.workspace,
-      message: 'Users assigned/updated',
-      type: 'log',
-      createdBy: req.user._id,
-    });
 
     await incident.populate('createdBy', 'name email');
     await incident.populate('assignedTo', 'name email');

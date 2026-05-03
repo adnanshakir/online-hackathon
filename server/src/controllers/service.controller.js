@@ -1,5 +1,6 @@
 import { Service } from '../models/service.model.js';
 import { Incident } from '../models/incident.model.js';
+import { notifyWorkspace } from './notification.controller.js';
 import AppError from '../utils/appError.js';
 
 export const createService = async (req, res, next) => {
@@ -176,6 +177,16 @@ export const updateServiceStatus = async (req, res, next) => {
     }
 
     await service.populate('createdBy', 'name email');
+
+    // Broadcast notification
+    notifyWorkspace({
+      actorId: req.user._id,
+      workspaceId: req.user.workspace,
+      type: 'service',
+      title: 'Service Health Update',
+      message: `${service.name} is now ${status}`,
+      link: '/services',
+    });
 
     return res.status(200).json(service);
   } catch (error) {
