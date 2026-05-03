@@ -151,8 +151,21 @@ export const updateService = async (req, res, next) => {
 // writes are blocked.
 export const updateServiceStatus = async (req, res, next) => {
   try {
+    // ✅ role check
+    if (!['admin', 'owner'].includes(req.user.role)) {
+      throw new AppError('Forbidden', 403);
+    }
+
     const { status } = req.body;
+
+    // ✅ required check
+    if (!status) {
+      throw new AppError('Status is required', 400);
+    }
+
+    // ✅ allowed validation
     const allowed = ['operational', 'degraded', 'down', 'maintenance'];
+
     if (!allowed.includes(status)) {
       throw new AppError(
         `Invalid status. Allowed: ${allowed.join(', ')}`,
@@ -160,6 +173,7 @@ export const updateServiceStatus = async (req, res, next) => {
       );
     }
 
+    // ✅ efficient update (best approach)
     const service = await Service.findOneAndUpdate(
       { _id: req.params.id, workspace: req.user.workspace },
       { healthStatus: status },
@@ -177,49 +191,6 @@ export const updateServiceStatus = async (req, res, next) => {
     return next(error);
   }
 };
-
-// Toggle service health status (operational/degraded/down/maintenance)
-// Surfaced on dashboard + public status page. Workspace-scoped.
-export const updateServiceStatus = async (req, res, next) => {
-  try {
-    if (!['admin', 'owner'].includes(req.user.role)) {
-      throw new AppError('Forbidden', 403);
-    }
-
-    const { status } = req.body;
-
-    if (!status) {
-      throw new AppError('Status is required', 400);
-    }
-
-    const allowed = ['operational', 'degraded', 'down', 'maintenance'];
-
-    if (!allowed.includes(status)) {
-      throw new AppError(`Invalid status. Allowed: ${allowed.join(', ')}`, 400);
-    }
-
-    const service = await Service.findOne({
-      _id: req.params.id,
-      workspace: req.user.workspace,
-    });
-
-    if (!service) {
-      throw new AppError('Service not found', 404);
-    }
-
-    if (service.status === status) {
-      return res.status(200).json(service);
-    }
-
-    service.status = status;
-    await service.save();
-
-    return res.status(200).json(service);
-  } catch (error) {
-    return next(error);
-  }
-};
-
 export const deleteService = async (req, res, next) => {
   try {
     const service = await Service.findOne({

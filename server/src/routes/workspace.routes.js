@@ -76,7 +76,8 @@ router.patch(
   updateWorkspaceContext
 );
 
- /* @route POST /api/workspace/invite
+/**
+ * @route POST /api/workspace/invite
  * @desc Send email invite to a user (owner/admin only)
  * @access Private
  */
