@@ -24,3 +24,5 @@ export const updateStatusSchema = z.object({
 export const assignUsersSchema = z.object({
   assignedTo: z.array(z.string()).min(1).optional(),
 });
+
+export const updateIncidentSchema = createIncidentSchema.partial();

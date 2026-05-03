@@ -24,6 +24,10 @@ export const createServiceSchema = z.object({
 
   status: z.enum(['active', 'maintenance', 'deprecated']).optional(),
 
+  healthStatus: z
+    .enum(['operational', 'degraded', 'down', 'maintenance'])
+    .optional(),
+
   repoUrl: z
     .string()
     .regex(

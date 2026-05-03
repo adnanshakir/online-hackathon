@@ -6,6 +6,7 @@ import {
   assignUsersSchema,
   createIncidentSchema,
   updateStatusSchema,
+  updateIncidentSchema,
 } from '../validators/incident.validator.js';
 import {
   assignUsers,
@@ -13,6 +14,8 @@ import {
   getIncidentById,
   getIncidents,
   updateIncidentStatus,
+  updateIncident,
+  deleteIncident,
 } from '../controllers/incident.controller.js';
 import updateRoutes from './update.routes.js';
 import { apiLimiter } from '../middlewares/rateLimit.middleware.js';
@@ -67,6 +70,18 @@ router.patch(
   validate(assignUsersSchema),
   assignUsers
 );
+
+/** @route PATCH /api/incidents/:id
+ * @desc Update incident core fields (title, description, severity, service)
+ * @access Private
+ */
+router.patch('/:id', validate(updateIncidentSchema), updateIncident);
+
+/** @route DELETE /api/incidents/:id
+ * @desc Delete incident and its timeline (owner/admin only)
+ * @access Private
+ */
+router.delete('/:id', deleteIncident);
 
 // Nested timeline routes under incidents/:id/updates
 router.use('/:id/updates', updateRoutes);

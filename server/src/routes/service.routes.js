@@ -66,6 +66,7 @@ router.patch('/:id', validate(updateServiceSchema), updateService);
 router.delete('/:id', deleteService);
 
 /**
+ * FIX (2026-05-02)
  * @route   PATCH /api/services/:id/status
  * @desc    Update a service's health status (operational/degraded/down/maintenance)
  * @access  Private (workspace member)
