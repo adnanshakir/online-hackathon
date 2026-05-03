@@ -32,7 +32,7 @@ const API_BASE_URL = RAW_API_URL
   ? `${RAW_API_URL.replace(/\/$/, '')}${RAW_API_URL.includes('/api') ? '' : '/api'}`
   : '/api';
 
-const http = axios.create({
+export const http = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
