@@ -29,19 +29,19 @@ export function TopBar() {
       </Button>
 
       {/* Search trigger — collapses to icon on mobile */}
-      <div className="flex flex-1 items-center md:flex-initial md:w-full md:max-w-md">
+      <div className="flex flex-1 items-center md:flex-initial lg:w-full lg:max-w-md md:w-64">
         {/* Desktop Search Button */}
         <button
           onClick={() => setCommandOpen(true)}
           className={cn(
-            'hidden md:flex group w-full items-center gap-3 rounded-lg border border-[var(--color-border)] ' +
+            'hidden md:flex group w-full items-center gap-2 lg:gap-3 rounded-lg border border-[var(--color-border)] ' +
               'bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-muted)] ' +
               'transition-colors hover:border-[var(--color-muted)] hover:text-[var(--color-foreground)]'
           )}
         >
-          <Search className="h-4 w-4" />
-          <span className="flex-1 text-left">Search incidents, services…</span>
-          <span className="flex items-center gap-1 text-[10px] text-[var(--color-muted)]">
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left truncate">Search incidents, services…</span>
+          <span className="hidden lg:flex items-center gap-1 text-[10px] text-[var(--color-muted)]">
             <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-1.5 py-0.5 font-sans">
               <CommandIcon className="inline h-3 w-3" />
             </kbd>
@@ -63,15 +63,15 @@ export function TopBar() {
         </Button>
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-1 sm:gap-2">
         <Button
           variant="gradient"
           size="sm"
-          className="hidden sm:inline-flex"
+          className="hidden sm:inline-flex items-center gap-2"
           onClick={() => setNewIncidentOpen(true)}
         >
-          <Plus className="h-4 w-4" />
-          New incident
+          <Plus className="h-4 w-4 shrink-0" />
+          <span className="hidden lg:inline">New incident</span>
         </Button>
 
         <NotificationsMenu />
@@ -81,6 +81,7 @@ export function TopBar() {
           size="icon-sm"
           onClick={toggleTheme}
           aria-label="Toggle theme"
+          className="shrink-0"
         >
           {theme === 'dark' ? (
             <Sun className="h-4 w-4" />
@@ -89,7 +90,7 @@ export function TopBar() {
           )}
         </Button>
 
-        <div className="ml-2">
+        <div className="ml-1 sm:ml-2 shrink-0">
           <UserMenu variant="app" />
         </div>
       </div>

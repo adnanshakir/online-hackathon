@@ -29,15 +29,13 @@ app.use(
 );
 
 // CORS
-app.set('trust proxy', 1);
-const corsOptions = {
-  origin: config.FRONTEND_URL,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: [config.FRONTEND_URL, 'http://localhost:5173', 'https://ops-watch.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true,
+  })
+);
 
 // Logger
 app.use(

@@ -18,6 +18,7 @@ import * as api from '@/lib/api';
 export default function VerifyEmail() {
   const [params] = useSearchParams();
   const token = params.get('token');
+  const userId = params.get('u');
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
@@ -29,7 +30,7 @@ export default function VerifyEmail() {
     let cancelled = false;
     (async () => {
       try {
-        await api.verifyEmail(token);
+        await api.verifyEmail(token, userId);
         if (!cancelled) setStatus('success');
       } catch (err) {
         if (cancelled) return;

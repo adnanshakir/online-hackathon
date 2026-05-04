@@ -60,9 +60,13 @@ router.post('/refresh-token', refreshAccessToken);
 /**
  * @route   POST /api/auth/logout
  * @desc    Clear tokens (cookie + DB) and invalidate session
- * @access  Private
+ * @access  Public (attempts auth to clear DB token)
  */
-router.post('/logout', authenticate, logout);
+router.post('/logout', (req, res, next) => {
+  authenticate(req, res, () => {
+    next(); // Always proceed to logout even if auth fails
+  });
+}, logout);
 
 /**
  * @route   GET /api/auth/google

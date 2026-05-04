@@ -11,8 +11,8 @@ import {
 
 const cookieOptions = {
   httpOnly: true,
-  sameSite: 'none',
-  secure: true,
+  sameSite: config.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: config.NODE_ENV === 'production',
 };
 
 const generateTokens = async (user) => {
@@ -219,9 +219,13 @@ export const refreshAccessToken = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } });
-    res.clearCookie('accessToken', cookieOptions);
-    res.clearCookie('refreshToken', cookieOptions);
+    if (req.user?._id) {
+      await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } });
+    }
+    
+    res.clearCookie('accessToken', { ...cookieOptions, maxAge: 0, expires: new Date(0), path: '/' });
+    res.clearCookie('refreshToken', { ...cookieOptions, maxAge: 0, expires: new Date(0), path: '/' });
+    
     return res.status(200).json({ message: 'Logged out successfully' });
   } catch (error) {
     return next(error);
@@ -410,10 +414,21 @@ export const resetPassword = async (req, res, next) => {
 
 export const verifyEmail = async (req, res, next) => {
   try {
-    const { token } = req.body;
+    const { token, u: userId } = req.body;
 
     if (!token) {
       throw new AppError('Verification token is required', 400);
+    }
+
+    // 1. If we have a userId, check if that user is already verified first
+    // This solves double-clicking/pre-fetching issues
+    if (userId) {
+      const existingUser = await User.findById(userId);
+      if (existingUser?.isVerified) {
+        return res.status(200).json({
+          message: 'Email already verified! You can proceed.',
+        });
+      }
     }
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -426,15 +441,12 @@ export const verifyEmail = async (req, res, next) => {
     // If no user found with this token, check if the user is ALREADY verified
     // (This handles cases where email clients pre-fetch/pre-click the link)
     if (!user) {
-      // If we are authenticated, we can check the current user
+      // Fallback: If user is logged in and verified, success
       if (req.user?.isVerified) {
         return res.status(200).json({
           message: 'Email already verified! You can proceed.',
         });
       }
-      
-      // If not authenticated, we can't easily know which user it was,
-      // but we can give a slightly more helpful message if the token is just missing.
       throw new AppError('Invalid or expired verification link', 400);
     }
 

@@ -30,7 +30,9 @@ import { isDemoMode, disableDemoMode, DEMO_USER } from '@/lib/demo';
 const RAW_API_URL = import.meta.env.VITE_API_URL?.trim();
 const API_BASE_URL = RAW_API_URL
   ? `${RAW_API_URL.replace(/\/$/, '')}${RAW_API_URL.includes('/api') ? '' : '/api'}`
-  : '/api';
+  : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api' // Use proxy in dev
+  : 'https://opswatch-acyt.onrender.com/api'; // Use direct Render URL in prod
 
 export const http = axios.create({
   baseURL: API_BASE_URL,
@@ -568,7 +570,10 @@ export async function me() {
  * the OAuth dance and bounces back to FRONTEND_URL with cookies set.
  */
 export function googleAuthUrl() {
-  return `${API_BASE_URL}/auth/google`;
+  const base = API_BASE_URL.startsWith('http') 
+    ? API_BASE_URL 
+    : `${window.location.origin}${API_BASE_URL}`;
+  return `${base}/auth/google`;
 }
 
 /**
@@ -588,11 +593,11 @@ export async function resendVerification(email) {
  * Marks the user's email verified. Returns 400 on expired/invalid tokens.
  * Used by the /verify-email page that the email link points to.
  */
-export async function verifyEmail(token) {
+export async function verifyEmail(token, userId) {
   if (isDemoMode()) {
     return { message: 'Demo session — already verified.' };
   }
-  const { data } = await http.post('/auth/verify-email', { token });
+  const { data } = await http.post('/auth/verify-email', { token, u: userId });
   // If the user is currently signed in, refresh their record so isVerified
   // flips in authStore without needing a manual reload.
   try {
