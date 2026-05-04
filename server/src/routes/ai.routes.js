@@ -3,6 +3,7 @@ import {
   getIncidentSummary,
   getIncidentRootCause,
   suggestIncidentCauses,
+  polishIncidentDetails,
 } from '../controllers/ai.controller.js';
 import {
   authenticate,
@@ -31,11 +32,13 @@ router.get('/incidents/:id/summary', getIncidentSummary);
  */
 router.get('/incidents/:id/root-cause', getIncidentRootCause);
 
+router.post('/suggest-causes', suggestIncidentCauses);
+
 /**
- * @route POST /api/ai/suggest-causes
- * @desc Get AI-generated root cause suggestions for a new incident based on workspace context
+ * @route POST /api/ai/polish
+ * @desc Professionalize incident title and description
  * @access Private
  */
-router.post('/suggest-causes', suggestIncidentCauses);
+router.post('/polish', polishIncidentDetails);
 
 export default router;
