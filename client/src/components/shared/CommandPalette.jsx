@@ -45,7 +45,7 @@ export function CommandPalette({ onCreateIncident }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] grid place-items-start justify-center bg-black/60 px-4 pt-[12vh] backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 px-2 pt-4 backdrop-blur-sm md:px-4 md:pt-[12vh]"
       onClick={() => setCommandOpen(false)}
     >
       <Command

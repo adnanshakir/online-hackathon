@@ -252,9 +252,9 @@ Title: ${title || 'N/A'}
 Description: ${description || 'N/A'}
 
 Rules:
-1. Fix spelling and grammar mistakes ONLY if the input is recognizable language.
-2. Use professional, calm, and technically accurate language.
-3. IMPORTANT: If the input is gibberish, meaningless, or lacks any technical context (e.g., "asdf", "test"), DO NOT invent facts. In such cases, return the original input for both title and description.
+1. Professionalize the language: use calm, technically accurate, and authoritative SRE terminology.
+2. Fix any spelling or grammar mistakes.
+3. If the input is very short, expand it slightly into a professional sentence.
 4. Return ONLY a valid JSON object with keys "title" and "description".
 5. Return only raw JSON. No markdown code blocks.`;
 
@@ -262,33 +262,40 @@ Rules:
 
     let polished = { title: title || '', description: description || '' };
     try {
-      // 1. Aggressively extract the JSON block
+      // 1. Extract JSON block more carefully
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      let jsonString = jsonMatch ? jsonMatch[0] : aiResponse;
-      
-      // 2. Fix literal newlines that break JSON.parse
-      // (Replaces literal newlines with \n escape characters)
-      jsonString = jsonString.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-      
-      // 3. Attempt parse
-      const parsed = JSON.parse(jsonString);
-      if (parsed.title || parsed.description) {
-        polished = {
-          title: (parsed.title || title || '').trim(),
-          description: (parsed.description || description || '').trim()
-        };
+      if (jsonMatch) {
+        const jsonString = jsonMatch[0];
+        
+        // 2. Try parsing directly first
+        try {
+          const parsed = JSON.parse(jsonString);
+          if (parsed.title || parsed.description) {
+            polished = {
+              title: (parsed.title || title || '').trim(),
+              description: (parsed.description || description || '').trim()
+            };
+          }
+        } catch (parseErr) {
+          // 3. If direct parse fails, it's likely due to unescaped newlines in the description
+          // We'll try a manual extraction for title and description
+          const titleMatch = jsonString.match(/"title":\s*"([\s\S]*?)"(?=,|\s*\})/);
+          const descMatch = jsonString.match(/"description":\s*"([\s\S]*?)"(?=,|\s*\})/);
+          
+          if (titleMatch || descMatch) {
+            polished = {
+              title: titleMatch ? titleMatch[1].trim() : (title || '').trim(),
+              description: descMatch ? descMatch[1].trim() : (description || '').trim()
+            };
+          } else {
+            throw parseErr; // Re-throw to hit the outer catch if even manual fails
+          }
+        }
       }
     } catch (e) {
-      console.warn('[ai.controller] Deep JSON parse failed, manual extraction:', e.message);
-      
-      // 4. Final Fallback: Manual extraction using regex if JSON.parse still fails
-      const titleMatch = aiResponse.match(/"title":\s*"([^"]*)"/);
-      const descMatch = aiResponse.match(/"description":\s*"([\s\S]*)"/);
-      
-      polished = {
-        title: titleMatch ? titleMatch[1] : (title || 'Incident Update'),
-        description: descMatch ? descMatch[1].replace(/```json\n?|```/g, '').replace(/\}$/g, '').trim() : aiResponse.replace(/```json\n?|```/g, '').trim()
-      };
+      console.error('[ai.controller] AI Polish parsing failed:', e.message, aiResponse);
+      // Final fallback to original content
+      polished = { title: title || '', description: description || '' };
     }
 
     return res.status(200).json({

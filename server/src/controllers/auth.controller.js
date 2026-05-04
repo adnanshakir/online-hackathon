@@ -423,7 +423,18 @@ export const verifyEmail = async (req, res, next) => {
       verificationExpires: { $gt: Date.now() },
     });
 
+    // If no user found with this token, check if the user is ALREADY verified
+    // (This handles cases where email clients pre-fetch/pre-click the link)
     if (!user) {
+      // If we are authenticated, we can check the current user
+      if (req.user?.isVerified) {
+        return res.status(200).json({
+          message: 'Email already verified! You can proceed.',
+        });
+      }
+      
+      // If not authenticated, we can't easily know which user it was,
+      // but we can give a slightly more helpful message if the token is just missing.
       throw new AppError('Invalid or expired verification link', 400);
     }
 

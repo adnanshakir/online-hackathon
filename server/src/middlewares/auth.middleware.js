@@ -40,15 +40,67 @@ export const authenticate = async (req, res, next) => {
   }
 };
 
-export const requireVerification = (req, res, next) => {
+import crypto from 'crypto';
+import { sendVerificationEmail } from '../services/mail.service.js';
+
+export const requireVerification = async (req, res, next) => {
   if (!req.user) {
     return next(new AppError('Authentication required', 401));
   }
 
   if (!req.user.isVerified) {
+    // 1. Check if we should send a new verification email
+    const now = new Date();
+    const lastSent = req.user.lastVerificationSentAt;
+    const cooldownPeriod = 5 * 60 * 1000; // 5 minute cooldown for auto-trigger
+
+    if (!lastSent || now - lastSent > cooldownPeriod) {
+      try {
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto
+          .createHash('sha256')
+          .update(verificationToken)
+          .digest('hex');
+
+        // Use findOneAndUpdate with a condition to prevent race conditions
+        // only update if lastVerificationSentAt matches what we saw or is still null
+        const updatedUser = await User.findOneAndUpdate(
+          { 
+            _id: req.user._id,
+            $or: [
+              { lastVerificationSentAt: lastSent },
+              { lastVerificationSentAt: null }
+            ]
+          },
+          {
+            $set: {
+              verificationToken: hashedToken,
+              verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+              lastVerificationSentAt: new Date(),
+            }
+          },
+          { new: true }
+        );
+
+        // If updatedUser is null, it means another request already updated it
+        if (updatedUser) {
+          sendVerificationEmail(req.user.email, req.user.name, verificationToken);
+          
+          return next(
+            new AppError(
+              'Email verification required for full access. A new verification link has been sent to your inbox.',
+              403
+            )
+          );
+        }
+      } catch (err) {
+        console.error('[auth.middleware] Auto-verification trigger failed:', err);
+      }
+    }
+
     return next(
       new AppError(
-        'Email verification required for full access. Please check your inbox.',
+        'Email verification required for full access. Please check your inbox for the link.',
         403
       )
     );

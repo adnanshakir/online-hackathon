@@ -291,14 +291,14 @@ export default function Dashboard() {
       className="mx-auto max-w-7xl"
     >
       {/* Header */}
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
           <p className="mt-1 text-sm text-[var(--color-muted)]">
             Live status across all your services and active incidents.
           </p>
         </div>
-        <Button variant="gradient" size="sm" asChild>
+        <Button variant="gradient" size="sm" asChild className="w-full sm:w-auto">
           <Link to="/app/incidents">
             View all incidents <ArrowRight className="h-4 w-4" />
           </Link>

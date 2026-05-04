@@ -120,6 +120,12 @@ router.post(
 router.post(
   '/verify-email',
   authLimiter,
+  (req, res, next) => {
+    // Make authentication optional here
+    authenticate(req, res, (err) => {
+      next(); // Continue even if auth fails
+    });
+  },
   validate(verifyEmailSchema),
   verifyEmail
 );

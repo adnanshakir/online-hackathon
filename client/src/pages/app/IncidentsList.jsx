@@ -2,9 +2,18 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion as _motion, AnimatePresence } from 'motion/react';
 const Motion = _motion;
-import { Plus, Search, Filter, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { IncidentsTable } from '@/components/incidents/IncidentsTable';
 import { useUIStore } from '@/store/uiStore';
 import { SEVERITY } from '@/lib/constants';
@@ -145,25 +154,62 @@ export default function IncidentsList() {
           />
         </div>
 
-        <div className="relative">
-          <Filter className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted)]" />
-          <select
-            value={severityFilter}
-            onChange={(e) => {
-              const next = new URLSearchParams(params);
-              if (e.target.value === 'all') next.delete('severity');
-              else next.set('severity', e.target.value);
-              setParams(next);
-            }}
-            className="h-10 appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-xs font-medium text-[var(--color-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]"
-          >
-            <option value="all">All severities</option>
-            {Object.values(SEVERITY).map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 gap-2 border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-medium hover:bg-[var(--color-surface-elevated)]"
+              >
+                <Filter className="h-3.5 w-3.5 text-[var(--color-muted)]" />
+                {severityFilter === 'all' ? (
+                  'All severities'
+                ) : (
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="size-1.5 rounded-full"
+                      style={{ background: SEVERITY[severityFilter]?.color }}
+                    />
+                    {SEVERITY[severityFilter]?.label}
+                  </span>
+                )}
+                <ChevronDown className="h-3.5 w-3.5 text-[var(--color-muted)]" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Filter by severity</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup
+                value={severityFilter}
+                onValueChange={(val) => {
+                  const next = new URLSearchParams(params);
+                  if (val === 'all') next.delete('severity');
+                  else next.set('severity', val);
+                  setParams(next);
+                }}
+              >
+                <DropdownMenuRadioItem value="all" className="text-xs">
+                  All severities
+                </DropdownMenuRadioItem>
+                {Object.values(SEVERITY).map((s) => (
+                  <DropdownMenuRadioItem
+                    key={s.value}
+                    value={s.value}
+                    className="text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <s.icon
+                        className="h-3.5 w-3.5"
+                        style={{ color: s.color }}
+                      />
+                      {s.label}
+                    </div>
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

@@ -19,4 +19,7 @@ export const useUIStore = create((set, get) => ({
 
   newIncidentOpen: false,
   setNewIncidentOpen: (newIncidentOpen) => set({ newIncidentOpen }),
+
+  mobileMenuOpen: false,
+  setMobileMenuOpen: (mobileMenuOpen) => set({ mobileMenuOpen }),
 }));
