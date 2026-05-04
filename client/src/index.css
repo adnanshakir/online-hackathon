@@ -149,8 +149,7 @@
   }
 
   body>#root {
-    position: relative;
-    z-index: 1;
+    /* No z-index here to allow portals (toasts/modals) to layer correctly */
   }
 
   /* Headings get a subtle negative tracking — Linear/Vercel style */
@@ -550,4 +549,9 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--color-muted);
   }
+}
+
+/* Force sonner toasts to stay on top of everything, including Radix dialog portals */
+[data-sonner-toaster] {
+  z-index: 99999 !important;
 }

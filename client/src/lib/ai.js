@@ -1,3 +1,7 @@
+import { toast } from 'sonner';
+import { polishDescriptionBackend } from './api';
+
+
 /**
  * Fake-but-realistic AI cause suggestions, keyed by keywords in the description.
  * If `VITE_GEMINI_API_KEY` is set, we call Gemini directly; otherwise we use the
@@ -284,15 +288,13 @@ Return a JSON array of exactly 3 probable root causes. Each item must have:
 Return ONLY the JSON array, no markdown, no commentary.`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-    {
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.4,
-          responseMimeType: 'application/json',
         },
       }),
     }
@@ -334,58 +336,21 @@ export async function polishDescription(arg1, arg2) {
   if (!description)
     return { polished: '', polishedTitle: title, source: 'local' };
 
-  const key = import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (key) {
-    try {
-      const prompt = `You are a Principal Site Reliability Engineer (SRE). Your task is to transform the provided informal notes into a high-fidelity, professional, and authoritative incident update.
-
-CONTEXT:
-${title ? `Incident Title: ${title}` : 'General incident update'}
-
-INPUT MESSAGE:
-"${description}"
-
-RULES:
-1. Tone: Professional, calm, technical, and precise.
-2. Structure: Ensure the update is clear and actionable.
-3. Language: Fix all grammar, spelling, and punctuation.
-4. Content: Transform casual phrases into SRE-standard terminology (e.g., "starting work" -> "initiating investigation", "fixed it" -> "mitigation applied").
-5. Constraints: Return ONLY a valid JSON object with keys "title" (if context provided) and "description".
-
-Return only raw JSON. No markdown code blocks.`;
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              responseMimeType: 'application/json',
-            },
-          }),
-        }
-      );
-      if (!res.ok) throw new Error(`Gemini ${res.status}`);
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-      if (text) {
-        const parsed = JSON.parse(text);
-        return {
-          polished: parsed.description,
-          polishedTitle: parsed.title,
-          source: 'gemini',
-        };
-      }
-    } catch (err) {
-      console.warn(
-        '[ai] gemini technical polish failed, using local:',
-        err.message
-      );
+  // Try the backend AI first (which has Mistral -> Gemini failover)
+  try {
+    console.log('[ai] attempting backend polish (Mistral/Gemini)...');
+    const polished = await polishDescriptionBackend(title, description);
+    if (polished) {
+      return {
+        polished: polished.description || description,
+        polishedTitle: polished.title || title,
+        source: 'backend-ai',
+      };
     }
+  } catch (err) {
+    console.error('[ai] backend polish error:', err.message);
+    // Don't toast here, just fall back to local if the backend is down or 
+    // AI providers are failing.
   }
 
   // Local fallback — deterministically enrich and fix common patterns

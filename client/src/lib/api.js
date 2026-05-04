@@ -633,6 +633,11 @@ export async function suggestCauses(incidentData) {
   return data;
 }
 
+export async function polishDescriptionBackend(title, description) {
+  const { data } = await http.post('/ai/polish', { title, description });
+  return data.polished;
+}
+
 /* ────────── Notifications ────────── */
 
 export async function getNotifications(page = 1, limit = 20) {

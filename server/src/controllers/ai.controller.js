@@ -235,3 +235,67 @@ Incident Report:
     return next(error);
   }
 };
+
+// Polish incident title and description
+export const polishIncidentDetails = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+
+    if (!title && !description) {
+      throw new AppError('Please provide a title or description', 400);
+    }
+
+    const prompt = `You are a Principal Site Reliability Engineer (SRE). Your task is to transform the provided informal notes into a high-fidelity, professional, and authoritative incident update.
+
+Original Notes:
+Title: ${title || 'N/A'}
+Description: ${description || 'N/A'}
+
+Rules:
+1. Fix spelling and grammar mistakes ONLY if the input is recognizable language.
+2. Use professional, calm, and technically accurate language.
+3. IMPORTANT: If the input is gibberish, meaningless, or lacks any technical context (e.g., "asdf", "test"), DO NOT invent facts. In such cases, return the original input for both title and description.
+4. Return ONLY a valid JSON object with keys "title" and "description".
+5. Return only raw JSON. No markdown code blocks.`;
+
+    const aiResponse = await generateAIResponse(prompt);
+
+    let polished = { title: title || '', description: description || '' };
+    try {
+      // 1. Aggressively extract the JSON block
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      let jsonString = jsonMatch ? jsonMatch[0] : aiResponse;
+      
+      // 2. Fix literal newlines that break JSON.parse
+      // (Replaces literal newlines with \n escape characters)
+      jsonString = jsonString.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+      
+      // 3. Attempt parse
+      const parsed = JSON.parse(jsonString);
+      if (parsed.title || parsed.description) {
+        polished = {
+          title: (parsed.title || title || '').trim(),
+          description: (parsed.description || description || '').trim()
+        };
+      }
+    } catch (e) {
+      console.warn('[ai.controller] Deep JSON parse failed, manual extraction:', e.message);
+      
+      // 4. Final Fallback: Manual extraction using regex if JSON.parse still fails
+      const titleMatch = aiResponse.match(/"title":\s*"([^"]*)"/);
+      const descMatch = aiResponse.match(/"description":\s*"([\s\S]*)"/);
+      
+      polished = {
+        title: titleMatch ? titleMatch[1] : (title || 'Incident Update'),
+        description: descMatch ? descMatch[1].replace(/```json\n?|```/g, '').replace(/\}$/g, '').trim() : aiResponse.replace(/```json\n?|```/g, '').trim()
+      };
+    }
+
+    return res.status(200).json({
+      success: true,
+      polished
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
