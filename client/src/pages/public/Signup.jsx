@@ -69,6 +69,7 @@ export default function Signup() {
             variant="outline"
             className="mt-6 w-full bg-white text-[#1f1f1f] hover:bg-[#f8f9fa] border-[#747775]/30"
             onClick={() => {
+              console.log('API:', import.meta.env.VITE_API_URL);
               window.location.href = api.googleAuthUrl();
             }}
           >
@@ -94,10 +95,10 @@ export default function Signup() {
             Continue with Google
           </Button>
 
-          <div className="my-6 flex items-center gap-3 text-[10px] uppercase tracking-wider text-[var(--color-muted)]">
-            <span className="h-px flex-1 bg-[var(--color-border)]" />
+          <div className="my-6 flex items-center gap-3 text-[10px] uppercase tracking-wider text-muted">
+            <span className="h-px flex-1 bg-border" />
             or
-            <span className="h-px flex-1 bg-[var(--color-border)]" />
+            <span className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -138,11 +139,11 @@ export default function Signup() {
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Create workspace <ArrowRight className="h-4 w-4" />
             </Button>
-            <p className="text-center text-xs text-[var(--color-muted)]">
+            <p className="text-center text-xs text-muted">
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-medium text-[var(--color-foreground)] hover:underline"
+                className="font-medium text-foreground hover:underline"
               >
                 Sign in
               </Link>
@@ -152,7 +153,7 @@ export default function Signup() {
       </Motion.div>
 
       {/* Right: clean panel + mini incident preview */}
-      <div className="relative hidden overflow-hidden border-l border-[var(--color-border)] lg:block">
+      <div className="relative hidden overflow-hidden border-l border-border lg:block">
         {/* subtle dot grid only */}
         <div
           aria-hidden
@@ -171,16 +172,16 @@ export default function Signup() {
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-md"
           >
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary)]">
-              What you'll get
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-(--color-brand-primary)">
+              What you&apos;ll get
             </p>
             <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-[-0.03em] xl:text-4xl">
               The calmest 19 minutes{' '}
-              <span className="text-[var(--color-brand-primary)]">
+              <span className="text-(--color-brand-primary)">
                 your team has ever shipped.
               </span>
             </h2>
-            <p className="mt-4 text-[14px] leading-relaxed text-[var(--color-muted-strong)]">
+            <p className="mt-4 text-[14px] leading-relaxed text-(--color-muted-strong)">
               Real-time timelines, smart role assignment, AI-generated briefs —
               production-ready from day one.
             </p>
@@ -198,6 +199,7 @@ export default function Signup() {
  * A trimmed-down version of the landing page WorkspacePreview.
  * ──────────────────────────────────────────────────────────── */
 
+// eslint-disable-next-line react/prop-types
 function AuthIncidentPreview({ className = '' }) {
   const items = [
     {
@@ -229,23 +231,23 @@ function AuthIncidentPreview({ className = '' }) {
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-[var(--color-border-strong)] bg-[var(--color-surface)] ${className}`}
+      className={`overflow-hidden rounded-2xl border border-(--color-border-strong) bg-surface ${className}`}
     >
-      <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)] px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-border bg-background px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
             INC-8421
           </span>
           <span className="rounded border border-red-500/30 bg-red-500/10 px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-red-400">
             Critical
           </span>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] tabular-nums text-[var(--color-muted)]">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] tabular-nums text-muted">
           19m
         </span>
       </div>
 
-      <div className="border-b border-[var(--color-border)] px-4 py-3">
+      <div className="border-b border-border px-4 py-3">
         <div className="text-[14px] font-semibold tracking-[-0.02em]">
           Elevated 5xx errors on checkout API
         </div>
@@ -253,10 +255,10 @@ function AuthIncidentPreview({ className = '' }) {
 
       <div className="space-y-3 p-4">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-muted)]">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-muted">
             Timeline
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
             live
           </span>
         </div>
@@ -264,16 +266,16 @@ function AuthIncidentPreview({ className = '' }) {
         <div className="relative space-y-3">
           <div
             aria-hidden
-            className="absolute left-[5px] top-2 bottom-2 w-px bg-[var(--color-border)]"
+            className="absolute left-1.25 top-2 bottom-2 w-px bg-border"
           />
           {items.map((u) => (
             <div key={u.time} className="relative flex items-start gap-3 pl-7">
               <span
-                className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-[var(--color-surface)] ${u.dot}`}
+                className={`absolute left-0 top-1.5 size-3 rounded-full ring-4 ring-surface ${u.dot}`}
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="font-mono text-[10px] tabular-nums text-[var(--color-muted)]">
+                  <span className="font-mono text-[10px] tabular-nums text-muted">
                     {u.time}
                   </span>
                   <span
@@ -282,7 +284,7 @@ function AuthIncidentPreview({ className = '' }) {
                     {u.label}
                   </span>
                 </div>
-                <div className="mt-0.5 truncate text-[12px] text-[var(--color-foreground)]/95">
+                <div className="mt-0.5 truncate text-[12px] text-foreground/95">
                   {u.text}
                 </div>
               </div>
@@ -290,16 +292,16 @@ function AuthIncidentPreview({ className = '' }) {
           ))}
         </div>
 
-        <div className="rounded-lg border border-[var(--color-brand-primary)]/30 bg-[var(--color-brand-primary)]/[0.06] p-3">
+        <div className="rounded-lg border border-(--color-brand-primary)/30 bg-(--color-brand-primary)/6 p-3">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary)]">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-(--color-brand-primary)">
               AI Brief
             </span>
-            <span className="font-mono text-[10px] tabular-nums text-[var(--color-brand-primary)]">
+            <span className="font-mono text-[10px] tabular-nums text-(--color-brand-primary)">
               87% conf
             </span>
           </div>
-          <p className="mt-1.5 text-[11.5px] leading-relaxed text-[var(--color-muted-strong)]">
+          <p className="mt-1.5 text-[11.5px] leading-relaxed text-(--color-muted-strong)">
             Webhook queue saturated after deploy v2.4.1. Mitigation succeeded.
           </p>
         </div>
