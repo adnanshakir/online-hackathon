@@ -13,6 +13,7 @@ import { motion as _motion, AnimatePresence } from 'motion/react';
 const Motion = _motion;
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/format';
 import {
   getNotifications,
@@ -181,13 +182,19 @@ export function NotificationsMenu() {
             />
 
             {/* Panel */}
-              <Motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl md:w-96"
-              >
+            <Motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className={cn(
+                'z-50 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl',
+                // Mobile: Centered fixed panel
+                'fixed left-4 right-4 top-20 mx-auto max-w-[calc(100vw-2rem)]',
+                // Desktop: Absolute dropdown from bell
+                'md:absolute md:left-auto md:right-0 md:top-full md:mt-2 md:w-96 md:max-w-none'
+              )}
+            >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
                 <div className="flex items-center gap-2">

@@ -48,9 +48,9 @@ export const sendPasswordResetEmail = async (email, name, token) => {
   });
 };
 
-export const sendVerificationEmail = async (email, name, token) => {
+export const sendVerificationEmail = async (email, name, token, userId) => {
   try {
-    const verificationLink = `${config.FRONTEND_URL}/verify-email?token=${token}`;
+    const verificationLink = `${config.FRONTEND_URL}/verify-email?token=${token}&u=${userId}`;
 
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">

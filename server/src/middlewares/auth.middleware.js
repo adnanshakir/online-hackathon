@@ -52,7 +52,7 @@ export const requireVerification = async (req, res, next) => {
     // 1. Check if we should send a new verification email
     const now = new Date();
     const lastSent = req.user.lastVerificationSentAt;
-    const cooldownPeriod = 5 * 60 * 1000; // 5 minute cooldown for auto-trigger
+    const cooldownPeriod = 10 * 1000; // 10 second cooldown for testing (was 5m)
 
     if (!lastSent || now - lastSent > cooldownPeriod) {
       try {
@@ -65,42 +65,50 @@ export const requireVerification = async (req, res, next) => {
         // Use findOneAndUpdate with a condition to prevent race conditions
         // only update if lastVerificationSentAt matches what we saw or is still null
         const updatedUser = await User.findOneAndUpdate(
-          { 
+          {
             _id: req.user._id,
             $or: [
               { lastVerificationSentAt: lastSent },
-              { lastVerificationSentAt: null }
-            ]
+              { lastVerificationSentAt: null },
+            ],
           },
           {
             $set: {
               verificationToken: hashedToken,
               verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
               lastVerificationSentAt: new Date(),
-            }
+            },
           },
           { new: true }
         );
 
         // If updatedUser is null, it means another request already updated it
         if (updatedUser) {
-          sendVerificationEmail(req.user.email, req.user.name, verificationToken);
-          
+          sendVerificationEmail(
+            req.user.email,
+            req.user.name,
+            verificationToken,
+            req.user._id
+          );
+
           return next(
             new AppError(
-              'Email verification required for full access. A new verification link has been sent to your inbox.',
+              "We've just sent a fresh verification link to your inbox. Please verify your account to start using OpsWatch.",
               403
             )
           );
         }
       } catch (err) {
-        console.error('[auth.middleware] Auto-verification trigger failed:', err);
+        console.error(
+          '[auth.middleware] Auto-verification trigger failed:',
+          err
+        );
       }
     }
 
     return next(
       new AppError(
-        'Email verification required for full access. Please check your inbox for the link.',
+        "Please verify your account to access this feature. We've already sent a link to your email.",
         403
       )
     );
