@@ -16,7 +16,7 @@ const initial = readStorage(STORAGE_KEY, null);
  * On hard-refresh we hydrate from localStorage so the app stays "logged in"
  * until `auth.me()` confirms (or denies) the session.
  */
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: initial,
   isAuthenticated: !!initial,
   isInitialCheckDone: !initial,
@@ -25,7 +25,15 @@ export const useAuthStore = create((set) => ({
 
   /** Set the current user (call after login/register/me) */
   setUser: (user) => {
+    const prev = get().user;
     if (user) {
+      // Avoid unnecessary writes that cause re-renders when nothing changed
+      try {
+        if (JSON.stringify(prev) === JSON.stringify(user)) return;
+      } catch {
+        // fall back to naive equality on id
+        if (prev && prev.id && user.id && prev.id === user.id) return;
+      }
       writeStorage(STORAGE_KEY, user);
       set({ user, isAuthenticated: true, isInitialCheckDone: true });
     } else {

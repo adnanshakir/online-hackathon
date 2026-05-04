@@ -21,6 +21,7 @@ export const DEMO_USER = {
   role: 'admin',
   avatar: null,
   authProviders: ['demo'],
+  workspace: 'demo_workspace',
 };
 
 export function isDemoMode() {

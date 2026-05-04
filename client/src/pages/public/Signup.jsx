@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/shared/Logo';
 import { fadeUp } from '@/components/motion/variants';
 import * as api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -36,7 +37,9 @@ export default function Signup() {
     try {
       // Brand new accounts have no workspace yet — go straight to the
       // workspace decision screen.
-      await api.register({ name, email, password });
+      const user = await api.register({ name, email, password });
+      // Persist auth in the store (API no longer mutates store)
+      useAuthStore.getState().setUser(user);
       toast.success('Welcome to OpsWatch!');
       navigate('/workspace-decision');
     } catch (err) {

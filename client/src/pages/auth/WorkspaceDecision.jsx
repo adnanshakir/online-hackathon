@@ -19,6 +19,7 @@ import { Logo } from '@/components/shared/Logo';
 import { fadeUp, stagger, scaleIn } from '@/components/motion/variants';
 import { toast } from 'sonner';
 import { workspace, logout } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { AmbientGlow } from '@/components/shared/AmbientGlow';
 
 export default function WorkspaceDecision() {
@@ -41,7 +42,9 @@ export default function WorkspaceDecision() {
     }
     setLoading(true);
     try {
-      await workspace.create({ name, slug });
+      const res = await workspace.create({ name, slug });
+      // If API returned refreshed user, persist it in the store
+      if (res?.user) useAuthStore.getState().setUser(res.user);
       toast.success('Workspace created successfully');
       navigate('/service-setup');
     } catch (err) {
@@ -59,7 +62,8 @@ export default function WorkspaceDecision() {
     }
     setLoading(true);
     try {
-      await workspace.join({ inviteCode });
+      const res = await workspace.join({ inviteCode });
+      if (res?.user) useAuthStore.getState().setUser(res.user);
       toast.success('Joined workspace successfully');
       navigate('/app/dashboard');
     } catch (err) {
@@ -71,6 +75,8 @@ export default function WorkspaceDecision() {
 
   const handleLogout = async () => {
     await logout();
+    // Clear local auth state explicitly (API no longer mutates store)
+    useAuthStore.getState().clear();
     navigate('/login');
   };
 
@@ -227,7 +233,7 @@ export default function WorkspaceDecision() {
                     <LayoutGrid className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--color-muted)]" />
                   </div>
                   <p className="text-[10px] text-[var(--color-muted)]">
-                    This will be your workspace's unique identifier.
+                    This will be your workspace&apos;s unique identifier.
                   </p>
                 </div>
 
@@ -305,9 +311,9 @@ export default function WorkspaceDecision() {
 
                 <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-[11px] leading-relaxed text-[var(--color-muted)]">
                   <p>
-                    <strong>Don't have a code?</strong> Ask your workspace owner
-                    or admin to generate one from the <strong>Team</strong>{' '}
-                    settings page.
+                    <strong>Don&apos;t have a code?</strong> Ask your workspace
+                    owner or admin to generate one from the{' '}
+                    <strong>Team</strong> settings page.
                   </p>
                 </div>
               </form>

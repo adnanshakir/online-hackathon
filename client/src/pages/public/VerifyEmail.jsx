@@ -29,7 +29,10 @@ export default function VerifyEmail() {
     let cancelled = false;
     (async () => {
       try {
-        await api.verifyEmail(token);
+        const res = await api.verifyEmail(token);
+        if (res?.user) {
+          useAuthStore.getState().setUser(res.user);
+        }
         if (!cancelled) setStatus('success');
       } catch (err) {
         if (cancelled) return;
@@ -112,7 +115,8 @@ export default function VerifyEmail() {
                 Email verified
               </h1>
               <p className="mt-1 text-sm text-[var(--color-muted)]">
-                Redirecting you to {isAuthenticated ? 'workspace setup' : 'sign in'}…
+                Redirecting you to{' '}
+                {isAuthenticated ? 'workspace setup' : 'sign in'}…
               </p>
               <Button asChild variant="gradient" className="mt-6">
                 <Link to={isAuthenticated ? '/workspace-decision' : '/login'}>
@@ -130,7 +134,9 @@ export default function VerifyEmail() {
               <h1 className="text-xl font-semibold tracking-tight">
                 Verification failed
               </h1>
-              <p className="mt-1 text-sm text-[var(--color-muted)]">{errorMsg}</p>
+              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                {errorMsg}
+              </p>
               <div className="mt-6 flex justify-center gap-2">
                 <Button asChild variant="outline">
                   <Link to="/login">Sign in</Link>
@@ -144,7 +150,8 @@ export default function VerifyEmail() {
         </div>
 
         <p className="mt-6 text-[11px] text-[var(--color-muted)]">
-          Tip: open the email link on the same device where the dev server is running.
+          Tip: open the email link on the same device where the dev server is
+          running.
         </p>
       </motion.div>
     </div>

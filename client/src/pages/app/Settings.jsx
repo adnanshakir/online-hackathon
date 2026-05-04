@@ -131,6 +131,8 @@ export default function Settings() {
   const handleLogout = async () => {
     try {
       await auth.logout();
+      // API no longer clears local auth — do it here explicitly
+      useAuthStore.getState().clear();
       toast.success('Signed out successfully');
       navigate('/', { replace: true });
     } catch {
@@ -352,8 +354,8 @@ export default function Settings() {
                   </div>
                   {confirmDelete && !deleting && (
                     <p className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-[12px] text-red-400">
-                      ⚠️ Click "Confirm — Delete" again to permanently delete
-                      this workspace and all its data.
+                      ⚠️ Click &quot;Confirm — Delete&quot; again to permanently
+                      delete this workspace and all its data.
                     </p>
                   )}
                 </Card>
@@ -544,3 +546,9 @@ function ToggleSwitch({ initial = false }) {
     </button>
   );
 }
+
+import PropTypes from 'prop-types';
+
+ToggleSwitch.propTypes = {
+  initial: PropTypes.bool,
+};

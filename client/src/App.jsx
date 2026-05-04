@@ -18,8 +18,8 @@ import VerifyEmail from '@/pages/public/VerifyEmail';
 import Services from '@/pages/app/Services';
 
 import { useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { useAuthStore } from '@/store/authStore';
-import { auth } from '@/lib/api';
 import { isDemoMode } from '@/lib/demo';
 
 function PublicRoute({ children }) {
@@ -42,6 +42,10 @@ function PublicRoute({ children }) {
   return children;
 }
 
+PublicRoute.propTypes = {
+  children: PropTypes.node,
+};
+
 /**
  * Route for users who are logged in but MUST choose a workspace.
  */
@@ -61,31 +65,23 @@ function WorkspaceDecisionRoute({ children }) {
   return children;
 }
 
+WorkspaceDecisionRoute.propTypes = {
+  children: PropTypes.node,
+};
+
 export default function App() {
-  const setUser = useAuthStore((s) => s.setUser);
   const setInitialCheckDone = useAuthStore((s) => s.setInitialCheckDone);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   // Initial session bootstrap — runs once on mount to reconcile cookie state
   // with localStorage. In demo mode auth.me() returns DEMO_USER synchronously
   // without hitting the backend, so this is fast and offline-safe.
   useEffect(() => {
-    auth
-      .me()
-      .then((user) => setUser(user))
-      .finally(() => setInitialCheckDone(true));
-  }, [setUser, setInitialCheckDone]);
+    setInitialCheckDone(true);
+  }, [setInitialCheckDone]);
 
-  // Session heartbeat — only ping the backend while we believe we're logged in
-  // and not in demo mode. 60s cadence is enough to catch refresh-token expiry
-  // without hammering the server.
-  useEffect(() => {
-    if (!isAuthenticated || isDemoMode()) return;
-    const interval = setInterval(() => {
-      auth.me();
-    }, 60_000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  // Session heartbeat removed: the /auth/me endpoint is not stable yet and
+  // polling caused unintended auth state churn. Reintroduce only when
+  // backend `/auth/me` is implemented and stable.
 
   return (
     <>

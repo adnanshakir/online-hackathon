@@ -60,16 +60,13 @@ http.interceptors.response.use(
         });
         return http(original);
       } catch (refreshErr) {
-        // Refresh failed -> logout
-        useAuthStore.getState().setUser(null);
+        // Refresh failed -> propagate error. Do NOT mutate auth state here.
         return Promise.reject(refreshErr);
       }
     }
 
-    // 2. If it's a 401 and we can't refresh, clear state
-    if (err.response?.status === 401) {
-      useAuthStore.getState().setUser(null);
-    }
+    // If it's a 401 and we can't refresh, propagate error without clearing auth.
+    // Let callers or explicit logout handle auth state changes.
 
     return Promise.reject(err);
   }
@@ -369,17 +366,12 @@ export async function createWorkspace({ name, slug }) {
       slug: slug || 'demo',
       inviteCode: 'DEMO01',
     };
-    useAuthStore.getState().setUser({
-      ...useAuthStore.getState().user,
-      workspace: fakeWorkspace._id,
-      originalWorkspace: fakeWorkspace,
-      role: 'owner',
-    });
+    // Demo mode: return a fake workspace. Do NOT mutate auth store here.
     return fakeWorkspace;
   }
   const { data } = await http.post('/workspace/create', { name, slug });
-  await me();
-  return data;
+  const user = await me();
+  return { workspace: data, user };
 }
 
 /**
@@ -389,16 +381,12 @@ export async function createWorkspace({ name, slug }) {
  */
 export async function joinWorkspace({ inviteCode }) {
   if (isDemoMode()) {
-    useAuthStore.getState().setUser({
-      ...useAuthStore.getState().user,
-      workspace: 'ws_demo',
-      role: 'member',
-    });
+    // Demo mode: return success. Do NOT mutate auth store here.
     return { message: 'Joined demo workspace' };
   }
   const { data } = await http.post('/workspace/join', { inviteCode });
-  await me();
-  return data;
+  const user = await me();
+  return { message: data, user };
 }
 
 // Namespace re-exports — Adnan's pages import { workspace, services } from
@@ -482,12 +470,11 @@ export async function getIncidentPostmortem(incidentId) {
  */
 export async function login({ email, password }) {
   if (isDemoMode()) {
-    useAuthStore.getState().setUser(DEMO_USER);
+    // Demo login: return demo user but do NOT mutate auth store here.
     return DEMO_USER;
   }
   const { data } = await http.post('/auth/login', { email, password });
   const user = toUser(data.user);
-  useAuthStore.getState().setUser(user);
   return user;
 }
 
@@ -502,12 +489,11 @@ export async function register({ name, email, password }) {
       name: name || DEMO_USER.name,
       email: email || DEMO_USER.email,
     };
-    useAuthStore.getState().setUser(user);
+    // Demo register: return user but do NOT mutate auth store here.
     return user;
   }
   const { data } = await http.post('/auth/register', { name, email, password });
   const user = toUser(data.user);
-  useAuthStore.getState().setUser(user);
   return user;
 }
 
@@ -518,15 +504,11 @@ export async function register({ name, email, password }) {
 export async function logout() {
   if (isDemoMode()) {
     disableDemoMode();
-    useAuthStore.getState().clear();
+    // Do not clear auth store here; let callers decide when to clear local state.
     return;
   }
-  try {
-    await http.post('/auth/logout');
-  } catch {
-    // Even if the network call fails, clear local state so the user isn't stuck.
-  }
-  useAuthStore.getState().clear();
+  // Perform server logout; do not mutate local auth store in the API layer.
+  await http.post('/auth/logout');
 }
 
 /**
@@ -548,17 +530,15 @@ export async function refreshToken() {
  */
 export async function me() {
   if (isDemoMode()) {
-    useAuthStore.getState().setUser(DEMO_USER);
+    // Demo mode: return demo user but do NOT mutate auth store here.
     return DEMO_USER;
   }
   try {
     const { data } = await http.get('/auth/me');
     const user = toUser(data.user || data);
-    useAuthStore.getState().setUser(user);
     return user;
   } catch {
-    // If session is invalid or endpoint fails, clear local state
-    useAuthStore.getState().setUser(null);
+    // Endpoint not implemented yet - return null without clearing auth
     return null;
   }
 }
@@ -595,14 +575,13 @@ export async function verifyEmail(token) {
   const { data } = await http.post('/auth/verify-email', { token });
   // If the user is currently signed in, refresh their record so isVerified
   // flips in authStore without needing a manual reload.
+  let user = null;
   try {
-    await me();
+    user = await me();
   } catch {
-    // Anonymous click (most common case — user clicks email on a different
-    // device or while logged out). That's fine; the next login picks up the
-    // verified state from the backend.
+    // Ignore — anonymous click is common. Caller may choose to persist user.
   }
-  return data;
+  return { data, user };
 }
 
 export const auth = {

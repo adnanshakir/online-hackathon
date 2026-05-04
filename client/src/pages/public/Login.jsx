@@ -10,6 +10,7 @@ import { Logo } from '@/components/shared/Logo';
 import { fadeUp } from '@/components/motion/variants';
 import { toast } from 'sonner';
 import * as api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { enableDemoMode } from '@/lib/demo';
 
 export default function Login() {
@@ -37,6 +38,8 @@ export default function Login() {
     setSubmitting(true);
     try {
       const user = await api.login({ email, password });
+      // Persist auth in the store (API layer no longer mutates store)
+      useAuthStore.getState().setUser(user);
       toast.success('Signed in');
       navigate(user?.workspace ? '/app/dashboard' : '/workspace-decision');
     } catch (err) {
@@ -165,7 +168,7 @@ export default function Login() {
               Sign in <ArrowRight className="h-4 w-4" />
             </Button>
             <p className="text-center text-xs text-[var(--color-muted)]">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 to="/signup"
                 className="font-medium text-[var(--color-foreground)] hover:underline"
@@ -224,6 +227,8 @@ export default function Login() {
  * A trimmed-down version of the landing page WorkspacePreview —
  * gives signing-up users an immediate read of the product.
  * ──────────────────────────────────────────────────────────── */
+
+import PropTypes from 'prop-types';
 
 function AuthIncidentPreview({ className = '' }) {
   const items = [
@@ -334,3 +339,7 @@ function AuthIncidentPreview({ className = '' }) {
     </div>
   );
 }
+
+AuthIncidentPreview.propTypes = {
+  className: PropTypes.string,
+};
