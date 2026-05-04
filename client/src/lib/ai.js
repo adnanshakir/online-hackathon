@@ -349,8 +349,14 @@ export async function polishDescription(arg1, arg2) {
     }
   } catch (err) {
     console.error('[ai] backend polish error:', err.message);
-    // Don't toast here, just fall back to local if the backend is down or 
-    // AI providers are failing.
+    if (err.response?.data?.message) {
+      console.error('[ai] backend detail:', err.response.data.message);
+    }
+    // If it's a verification or auth error, don't fall back, re-throw 
+    // so the UI can show the actual error toast.
+    if (err.response?.status === 403 || err.response?.status === 401) {
+      throw err;
+    }
   }
 
   // Local fallback — deterministically enrich and fix common patterns

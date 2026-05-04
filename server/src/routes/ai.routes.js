@@ -15,7 +15,7 @@ const router = Router();
 
 // Protect all AI routes
 router.use(authenticate);
-router.use(requireVerification);
+// router.use(requireVerification);
 router.use(apiLimiter);
 
 /**

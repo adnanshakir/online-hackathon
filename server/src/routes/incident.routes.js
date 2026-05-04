@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import validate from '../middlewares/validate.middleware.js';
 import { requireWorkspace } from '../middlewares/workspace.middleware.js';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import { authenticate, requireVerification } from '../middlewares/auth.middleware.js';
 import {
   assignUsersSchema,
   createIncidentSchema,
@@ -32,7 +32,7 @@ router.use(apiLimiter);
  */
 router.post(
   '/',
-  // requireVerification,
+  requireVerification,
   validate(createIncidentSchema),
   createIncident
 );
@@ -55,7 +55,7 @@ router.get('/:id', getIncidentById);
  */
 router.patch(
   '/:id/status',
-  // requireVerification,
+  requireVerification,
   validate(updateStatusSchema),
   updateIncidentStatus
 );
@@ -66,7 +66,7 @@ router.patch(
  */
 router.patch(
   '/:id/assign',
-  // requireVerification,
+  requireVerification,
   validate(assignUsersSchema),
   assignUsers
 );

@@ -1,6 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { MobileSidebar } from './MobileSidebar';
 import { CommandPalette } from '@/components/shared/CommandPalette';
 import { ShortcutsDialog } from '@/components/shared/ShortcutsDialog';
 import { NewIncidentDialog } from '@/components/incidents/NewIncidentDialog';
@@ -44,6 +45,7 @@ export function AppLayout() {
       </div>
 
       {/* Global overlays */}
+      <MobileSidebar />
       <CommandPalette onCreateIncident={() => setNewIncidentOpen(true)} />
       <ShortcutsDialog />
       <NewIncidentDialog

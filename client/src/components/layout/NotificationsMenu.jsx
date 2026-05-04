@@ -181,13 +181,13 @@ export function NotificationsMenu() {
             />
 
             {/* Panel */}
-            <Motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.97 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="absolute right-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl"
-            >
+              <Motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl md:w-96"
+              >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
                 <div className="flex items-center gap-2">
