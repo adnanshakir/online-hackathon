@@ -438,6 +438,8 @@ export const verifyEmail = async (req, res, next) => {
       verificationExpires: { $gt: Date.now() },
     });
 
+    // If no user found with this token, check if the user is ALREADY verified
+    // (This handles cases where email clients pre-fetch/pre-click the link)
     if (!user) {
       // Fallback: If user is logged in and verified, success
       if (req.user?.isVerified) {
